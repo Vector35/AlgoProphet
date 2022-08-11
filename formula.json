@@ -1,0 +1,6 @@
+{
+    "arr_sum.gml": "sum += arr[index]",
+    "sum_of_selfprod.gml": "sum += arr[index] * arr[index]",
+    "degrees_to_radians.gml": "rad = deg * pi / 180",
+    "radians_to_degrees.gml": "deg = rad * 180 / pi"
+}

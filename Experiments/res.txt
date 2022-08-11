@@ -1,0 +1,79 @@
+======== amd64 ========
+average_float
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [29]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+average_double
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [18]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+accumulation_double
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+sum_with_while
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [9]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+get_product
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+sum_of_products
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+Matched!
+Matched instructions:  [11, 12]
+
+======== arm64 ========
+average_float
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [37]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+average_double
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [25]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+sum_with_while
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [14]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+sum_array_float
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [23]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+
+summation_double
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+Matched!
+Matched instructions:  [23]
+
+variance_float
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Matched!
+Matched instructions:  [31]
+Matched instructions:  [31]
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+Matched!
+Matched instructions:  [17, 38]
+Matched instructions:  [38, 32]
+
+sum_of_selfprod
+Use model:  ./sepmodel/function-based/arr_sum.gml
+Use model:  ./sepmodel/function-based/sum_of_selfprod.gml
+Matched!
+Matched instructions:  [14]
