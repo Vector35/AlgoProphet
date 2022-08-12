@@ -1,0 +1,100 @@
+graph [
+  directed 1
+  node [
+    id 0
+    label "0xcac"
+    type "constant"
+    value "0xcac"
+    idx 6
+  ]
+  node [
+    id 1
+    label "__libc_start_main#0"
+    type "operation"
+    value "__libc_start_main"
+    idx 6
+  ]
+  node [
+    id 2
+    label "x1#1"
+    type "operation"
+    value "x1"
+    idx 6
+  ]
+  node [
+    id 3
+    label "x2#1"
+    type "operation"
+    value "x2"
+    idx 6
+  ]
+  node [
+    id 4
+    label "nullptr"
+    type "constant"
+    value "nullptr"
+    idx 6
+  ]
+  node [
+    id 5
+    label "x5#1"
+    type "operation"
+    value "x5"
+    idx 6
+  ]
+  node [
+    id 6
+    label "x6#1"
+    type "operation"
+    value "x6"
+    idx 6
+  ]
+  edge [
+    source 0
+    target 1
+    weight 1
+    idx 6
+    src_name "0xcac"
+    dst_name "__libc_start_main#0"
+  ]
+  edge [
+    source 2
+    target 1
+    weight 1
+    idx 6
+    src_name "x1#1"
+    dst_name "__libc_start_main#0"
+  ]
+  edge [
+    source 3
+    target 1
+    weight 1
+    idx 6
+    src_name "x2#1"
+    dst_name "__libc_start_main#0"
+  ]
+  edge [
+    source 4
+    target 1
+    weight 2
+    idx 6
+    src_name "nullptr"
+    dst_name "__libc_start_main#0"
+  ]
+  edge [
+    source 5
+    target 1
+    weight 1
+    idx 6
+    src_name "x5#1"
+    dst_name "__libc_start_main#0"
+  ]
+  edge [
+    source 6
+    target 1
+    weight 1
+    idx 6
+    src_name "x6#1"
+    dst_name "__libc_start_main#0"
+  ]
+]

@@ -157,7 +157,9 @@ def rhs_visit(expr):
                 pointer_base = str(expr)
                 pointer_type = str(expr.expr_type)
                 # might depend on architecture?
-                if "int" in pointer_type:
+                if "char" in pointer_type:
+                    current_data_width = 1
+                elif "int" in pointer_type:
                     current_data_width = 4
                 elif "float" in pointer_type:
                     current_data_width = 4
@@ -178,6 +180,33 @@ def rhs_visit(expr):
         add_edge_node(rhs_output_node, operation)
         load_mode = False
         return operation
+    elif isinstance(expr, MediumLevelILImport):
+        if load_mode == True:
+            pointer_type = str(expr.expr_type)
+            if "char" in pointer_type:
+                current_data_width = 1
+            elif "int" in pointer_type:
+                current_data_width = 4
+            elif "float" in pointer_type:
+                current_data_width = 4
+            elif "double" in pointer_type:
+                current_data_width = 8
+        return bv.get_data_var_at(expr.constant).name
+    elif isinstance(expr, MediumLevelILConstPtr):
+        # e.g., a pointer targeting to global constant
+        # constant pointer is also an instance of constant
+        # so we should put before constant
+        if load_mode == True:
+            pointer_type = str(expr.expr_type)
+            if "char" in pointer_type:
+                current_data_width = 1
+            elif "int" in pointer_type:
+                current_data_width = 4
+            elif "float" in pointer_type:
+                current_data_width = 4
+            elif "double" in pointer_type:
+                current_data_width = 8
+        return str(bv.get_data_var_at(expr.constant).value)
     elif isinstance(expr, Constant):
         if str(expr) not in nodes:
             nodes.append(str(expr.constant))
@@ -438,12 +467,14 @@ def read_binaryview(binview, f):
         nodes.append(loop_var)
     input_vars = nodes.copy()
     
+    print("function: ", f.name)
     for bb_idx in bb_order:
         bb = bb_dict[bb_idx]
         idx = bb.start
         while idx < bb.end:
             # print("index: ", idx, ": ", str(insts[idx]))
             inst_idx = idx
+            print(str(insts[idx]))
             inst_visit(insts[idx])
             idx += 1
     
@@ -478,9 +509,10 @@ def read_binaryview(binview, f):
             elif connected_node.isnumeric():
                 shift_candidates.append(int(connected_node))
         if len(shift_candidates) != 0:
+            # heuristics
             shift_ = max(shift_candidates)
             graph.nodes[load_name]["shift_width"] = shift_
             
-    #nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
+    nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
     
     return graph
