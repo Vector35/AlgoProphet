@@ -1,0 +1,369 @@
+graph [
+  directed 1
+  node [
+    id 0
+    label "0"
+    type "constant"
+    value "0"
+    idx 75
+  ]
+  node [
+    id 1
+    label "6.2831852"
+    type "constant"
+    value "6.2831852"
+    idx 52
+  ]
+  node [
+    id 2
+    label "pow#0"
+    type "operation"
+    value "pow"
+    idx 52
+  ]
+  node [
+    id 3
+    label "FMUL#2"
+    type "operation"
+    value "FMUL"
+    idx 52
+  ]
+  node [
+    id 4
+    label "-1"
+    type "constant"
+    value "-1"
+    idx 52
+  ]
+  node [
+    id 5
+    label "5.0"
+    type "constant"
+    value "5.0"
+    idx 52
+  ]
+  node [
+    id 6
+    label "_-sin(2pi&#183;k&#183;idx/M)#5"
+    type "operation"
+    value "_-sin(2pi&#183;k&#183;idx/M)"
+    idx 53
+  ]
+  node [
+    id 7
+    label "__sincos#0"
+    type "operation"
+    value "__sincos"
+    idx 53
+  ]
+  node [
+    id 8
+    label "x0#3"
+    type "operation"
+    value "x0"
+    idx 53
+  ]
+  node [
+    id 9
+    label "x1#3"
+    type "operation"
+    value "x1"
+    idx 53
+  ]
+  node [
+    id 10
+    label "FMUL#3"
+    type "operation"
+    value "FMUL"
+    idx 60
+  ]
+  node [
+    id 11
+    label "FMUL#4"
+    type "operation"
+    value "FMUL"
+    idx 60
+  ]
+  node [
+    id 12
+    label "0.0"
+    type "constant"
+    value "0.0"
+    idx 64
+  ]
+  node [
+    id 13
+    label "FADD#1"
+    type "operation"
+    value "FADD"
+    idx 60
+  ]
+  node [
+    id 14
+    label "FMUL#5"
+    type "operation"
+    value "FMUL"
+    idx 61
+  ]
+  node [
+    id 15
+    label "FNEG#0"
+    type "operation"
+    value "FNEG"
+    idx 64
+  ]
+  node [
+    id 16
+    label "FMUL#6"
+    type "operation"
+    value "FMUL"
+    idx 64
+  ]
+  node [
+    id 17
+    label "FADD#3"
+    type "operation"
+    value "FADD"
+    idx 64
+  ]
+  node [
+    id 18
+    label "ADD#0"
+    type "operation"
+    value "ADD"
+    idx 65
+  ]
+  node [
+    id 19
+    label "1"
+    type "constant"
+    value "1"
+    idx 75
+  ]
+  node [
+    id 20
+    label "arg_fx#0"
+    type "ssavar"
+    value "arg_fx#0"
+    idx 66
+  ]
+  node [
+    id 21
+    label "ADD#1"
+    type "operation"
+    value "ADD"
+    idx 66
+  ]
+  node [
+    id 22
+    label "16"
+    type "constant"
+    value "16"
+    idx 76
+  ]
+  node [
+    id 23
+    label "ADD#2"
+    type "operation"
+    value "ADD"
+    idx 75
+  ]
+  node [
+    id 24
+    label "arg_fu#0"
+    type "ssavar"
+    value "arg_fu#0"
+    idx 76
+  ]
+  node [
+    id 25
+    label "ADD#3"
+    type "operation"
+    value "ADD"
+    idx 76
+  ]
+  edge [
+    source 0
+    target 3
+    weight 2
+    idx 52
+    src_name "0"
+    dst_name "FMUL#2"
+  ]
+  edge [
+    source 0
+    target 18
+    weight 1
+    idx 65
+    src_name "0"
+    dst_name "ADD#0"
+  ]
+  edge [
+    source 0
+    target 23
+    weight 1
+    idx 75
+    src_name "0"
+    dst_name "ADD#2"
+  ]
+  edge [
+    source 1
+    target 3
+    weight 1
+    idx 52
+    src_name "6.2831852"
+    dst_name "FMUL#2"
+  ]
+  edge [
+    source 2
+    target 3
+    weight 1
+    idx 52
+    src_name "pow#0"
+    dst_name "FMUL#2"
+  ]
+  edge [
+    source 4
+    target 2
+    weight 1
+    idx 52
+    src_name "-1"
+    dst_name "pow#0"
+  ]
+  edge [
+    source 5
+    target 2
+    weight 1
+    idx 52
+    src_name "5.0"
+    dst_name "pow#0"
+  ]
+  edge [
+    source 6
+    target 7
+    weight 1
+    idx 53
+    src_name "_-sin(2pi&#183;k&#183;idx/M)#5"
+    dst_name "__sincos#0"
+  ]
+  edge [
+    source 8
+    target 7
+    weight 1
+    idx 53
+    src_name "x0#3"
+    dst_name "__sincos#0"
+  ]
+  edge [
+    source 9
+    target 7
+    weight 1
+    idx 53
+    src_name "x1#3"
+    dst_name "__sincos#0"
+  ]
+  edge [
+    source 10
+    target 13
+    weight 1
+    idx 60
+    src_name "FMUL#3"
+    dst_name "FADD#1"
+  ]
+  edge [
+    source 11
+    target 13
+    weight 1
+    idx 60
+    src_name "FMUL#4"
+    dst_name "FADD#1"
+  ]
+  edge [
+    source 12
+    target 13
+    weight 1
+    idx 60
+    src_name "0.0"
+    dst_name "FADD#1"
+  ]
+  edge [
+    source 12
+    target 17
+    weight 1
+    idx 64
+    src_name "0.0"
+    dst_name "FADD#3"
+  ]
+  edge [
+    source 14
+    target 15
+    weight 1
+    idx 61
+    src_name "FMUL#5"
+    dst_name "FNEG#0"
+  ]
+  edge [
+    source 15
+    target 17
+    weight 1
+    idx 64
+    src_name "FNEG#0"
+    dst_name "FADD#3"
+  ]
+  edge [
+    source 16
+    target 17
+    weight 1
+    idx 64
+    src_name "FMUL#6"
+    dst_name "FADD#3"
+  ]
+  edge [
+    source 19
+    target 18
+    weight 1
+    idx 65
+    src_name "1"
+    dst_name "ADD#0"
+  ]
+  edge [
+    source 19
+    target 23
+    weight 1
+    idx 75
+    src_name "1"
+    dst_name "ADD#2"
+  ]
+  edge [
+    source 20
+    target 21
+    weight 1
+    idx 66
+    src_name "arg_fx#0"
+    dst_name "ADD#1"
+  ]
+  edge [
+    source 22
+    target 21
+    weight 1
+    idx 66
+    src_name "16"
+    dst_name "ADD#1"
+  ]
+  edge [
+    source 22
+    target 25
+    weight 1
+    idx 76
+    src_name "16"
+    dst_name "ADD#3"
+  ]
+  edge [
+    source 24
+    target 25
+    weight 1
+    idx 76
+    src_name "arg_fu#0"
+    dst_name "ADD#3"
+  ]
+]

@@ -215,6 +215,8 @@ def rhs_visit(expr):
         return rhs_visit(expr.src)
     elif isinstance(expr, MediumLevelILLowPart):
         return rhs_visit(expr.src)
+    elif isinstance(expr, MediumLevelILSx) or isinstance(expr, MediumLevelILZx):
+        return rhs_visit(expr.src)
     elif isinstance(expr, Arithmetic):
         arithmetic = get_arithmetic(expr.operation)
         if "/" in arithmetic:

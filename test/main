@@ -1,0 +1,483 @@
+graph [
+  directed 1
+  node [
+    id 0
+    label "0x100003ea0"
+    type "constant"
+    value "0x100003ea0"
+    idx 24
+  ]
+  node [
+    id 1
+    label "sum_with_idx#0"
+    type "operation"
+    value "sum_with_idx"
+    idx 0
+  ]
+  node [
+    id 2
+    label "5"
+    type "constant"
+    value "5"
+    idx 24
+  ]
+  node [
+    id 3
+    label "&#34;sum_with_idx is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_with_idx is %d\n&#34;"
+    idx 2
+  ]
+  node [
+    id 4
+    label "_printf#0"
+    type "operation"
+    value "_printf"
+    idx 2
+  ]
+  node [
+    id 5
+    label "sum_with_while#0"
+    type "operation"
+    value "sum_with_while"
+    idx 3
+  ]
+  node [
+    id 6
+    label "&#34;sum_with_while is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_with_while is %d\n&#34;"
+    idx 5
+  ]
+  node [
+    id 7
+    label "_printf#1"
+    type "operation"
+    value "_printf"
+    idx 5
+  ]
+  node [
+    id 8
+    label "0x100003ed0"
+    type "constant"
+    value "0x100003ed0"
+    idx 6
+  ]
+  node [
+    id 9
+    label "sum_with_nested#0"
+    type "operation"
+    value "sum_with_nested"
+    idx 6
+  ]
+  node [
+    id 10
+    label "2"
+    type "constant"
+    value "2"
+    idx 8
+  ]
+  node [
+    id 11
+    label "&#34;sum_with_nested is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_with_nested is %d\n&#34;"
+    idx 8
+  ]
+  node [
+    id 12
+    label "_printf#2"
+    type "operation"
+    value "_printf"
+    idx 8
+  ]
+  node [
+    id 13
+    label "sum_with_size#0"
+    type "operation"
+    value "sum_with_size"
+    idx 9
+  ]
+  node [
+    id 14
+    label "&#34;sum_with_size is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_with_size is %d\n&#34;"
+    idx 11
+  ]
+  node [
+    id 15
+    label "_printf#3"
+    type "operation"
+    value "_printf"
+    idx 11
+  ]
+  node [
+    id 16
+    label "sum_with_sqsize#0"
+    type "operation"
+    value "sum_with_sqsize"
+    idx 12
+  ]
+  node [
+    id 17
+    label "&#34;sum_with_sqsize is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_with_sqsize is %d\n&#34;"
+    idx 14
+  ]
+  node [
+    id 18
+    label "_printf#4"
+    type "operation"
+    value "_printf"
+    idx 14
+  ]
+  node [
+    id 19
+    label "get_product#0"
+    type "operation"
+    value "get_product"
+    idx 15
+  ]
+  node [
+    id 20
+    label "&#34;get_product is %d\n&#34;"
+    type "constant"
+    value "&#34;get_product is %d\n&#34;"
+    idx 17
+  ]
+  node [
+    id 21
+    label "_printf#5"
+    type "operation"
+    value "_printf"
+    idx 17
+  ]
+  node [
+    id 22
+    label "sum_of_selfprod#0"
+    type "operation"
+    value "sum_of_selfprod"
+    idx 18
+  ]
+  node [
+    id 23
+    label "&#34;sum_of_selfprod is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_of_selfprod is %d\n&#34;"
+    idx 20
+  ]
+  node [
+    id 24
+    label "_printf#6"
+    type "operation"
+    value "_printf"
+    idx 20
+  ]
+  node [
+    id 25
+    label "sum_of_products#0"
+    type "operation"
+    value "sum_of_products"
+    idx 21
+  ]
+  node [
+    id 26
+    label "0x100003eb4"
+    type "constant"
+    value "0x100003eb4"
+    idx 24
+  ]
+  node [
+    id 27
+    label "&#34;sum_of_products is %d\n&#34;"
+    type "constant"
+    value "&#34;sum_of_products is %d\n&#34;"
+    idx 23
+  ]
+  node [
+    id 28
+    label "_printf#7"
+    type "operation"
+    value "_printf"
+    idx 23
+  ]
+  node [
+    id 29
+    label "awful_sum_of_prod#0"
+    type "operation"
+    value "awful_sum_of_prod"
+    idx 24
+  ]
+  node [
+    id 30
+    label "&#34;awful_sum_of_prod is %d\n&#34;"
+    type "constant"
+    value "&#34;awful_sum_of_prod is %d\n&#34;"
+    idx 26
+  ]
+  node [
+    id 31
+    label "_printf#8"
+    type "operation"
+    value "_printf"
+    idx 26
+  ]
+  edge [
+    source 0
+    target 1
+    weight 1
+    idx 0
+    src_name "0x100003ea0"
+    dst_name "sum_with_idx#0"
+  ]
+  edge [
+    source 0
+    target 5
+    weight 1
+    idx 3
+    src_name "0x100003ea0"
+    dst_name "sum_with_while#0"
+  ]
+  edge [
+    source 0
+    target 19
+    weight 1
+    idx 15
+    src_name "0x100003ea0"
+    dst_name "get_product#0"
+  ]
+  edge [
+    source 0
+    target 22
+    weight 1
+    idx 18
+    src_name "0x100003ea0"
+    dst_name "sum_of_selfprod#0"
+  ]
+  edge [
+    source 0
+    target 25
+    weight 1
+    idx 21
+    src_name "0x100003ea0"
+    dst_name "sum_of_products#0"
+  ]
+  edge [
+    source 0
+    target 29
+    weight 1
+    idx 24
+    src_name "0x100003ea0"
+    dst_name "awful_sum_of_prod#0"
+  ]
+  edge [
+    source 2
+    target 1
+    weight 1
+    idx 0
+    src_name "5"
+    dst_name "sum_with_idx#0"
+  ]
+  edge [
+    source 2
+    target 4
+    weight 1
+    idx 2
+    src_name "5"
+    dst_name "_printf#0"
+  ]
+  edge [
+    source 2
+    target 5
+    weight 1
+    idx 3
+    src_name "5"
+    dst_name "sum_with_while#0"
+  ]
+  edge [
+    source 2
+    target 7
+    weight 1
+    idx 5
+    src_name "5"
+    dst_name "_printf#1"
+  ]
+  edge [
+    source 2
+    target 13
+    weight 1
+    idx 9
+    src_name "5"
+    dst_name "sum_with_size#0"
+  ]
+  edge [
+    source 2
+    target 16
+    weight 1
+    idx 12
+    src_name "5"
+    dst_name "sum_with_sqsize#0"
+  ]
+  edge [
+    source 2
+    target 19
+    weight 1
+    idx 15
+    src_name "5"
+    dst_name "get_product#0"
+  ]
+  edge [
+    source 2
+    target 21
+    weight 1
+    idx 17
+    src_name "5"
+    dst_name "_printf#5"
+  ]
+  edge [
+    source 2
+    target 22
+    weight 1
+    idx 18
+    src_name "5"
+    dst_name "sum_of_selfprod#0"
+  ]
+  edge [
+    source 2
+    target 24
+    weight 1
+    idx 20
+    src_name "5"
+    dst_name "_printf#6"
+  ]
+  edge [
+    source 2
+    target 25
+    weight 1
+    idx 21
+    src_name "5"
+    dst_name "sum_of_products#0"
+  ]
+  edge [
+    source 2
+    target 29
+    weight 1
+    idx 24
+    src_name "5"
+    dst_name "awful_sum_of_prod#0"
+  ]
+  edge [
+    source 3
+    target 4
+    weight 1
+    idx 2
+    src_name "&#34;sum_with_idx is %d\n&#34;"
+    dst_name "_printf#0"
+  ]
+  edge [
+    source 6
+    target 7
+    weight 1
+    idx 5
+    src_name "&#34;sum_with_while is %d\n&#34;"
+    dst_name "_printf#1"
+  ]
+  edge [
+    source 8
+    target 9
+    weight 1
+    idx 6
+    src_name "0x100003ed0"
+    dst_name "sum_with_nested#0"
+  ]
+  edge [
+    source 10
+    target 9
+    weight 1
+    idx 6
+    src_name "2"
+    dst_name "sum_with_nested#0"
+  ]
+  edge [
+    source 10
+    target 12
+    weight 1
+    idx 8
+    src_name "2"
+    dst_name "_printf#2"
+  ]
+  edge [
+    source 11
+    target 12
+    weight 1
+    idx 8
+    src_name "&#34;sum_with_nested is %d\n&#34;"
+    dst_name "_printf#2"
+  ]
+  edge [
+    source 14
+    target 15
+    weight 1
+    idx 11
+    src_name "&#34;sum_with_size is %d\n&#34;"
+    dst_name "_printf#3"
+  ]
+  edge [
+    source 17
+    target 18
+    weight 1
+    idx 14
+    src_name "&#34;sum_with_sqsize is %d\n&#34;"
+    dst_name "_printf#4"
+  ]
+  edge [
+    source 20
+    target 21
+    weight 1
+    idx 17
+    src_name "&#34;get_product is %d\n&#34;"
+    dst_name "_printf#5"
+  ]
+  edge [
+    source 23
+    target 24
+    weight 1
+    idx 20
+    src_name "&#34;sum_of_selfprod is %d\n&#34;"
+    dst_name "_printf#6"
+  ]
+  edge [
+    source 26
+    target 25
+    weight 1
+    idx 21
+    src_name "0x100003eb4"
+    dst_name "sum_of_products#0"
+  ]
+  edge [
+    source 26
+    target 29
+    weight 1
+    idx 24
+    src_name "0x100003eb4"
+    dst_name "awful_sum_of_prod#0"
+  ]
+  edge [
+    source 27
+    target 28
+    weight 1
+    idx 23
+    src_name "&#34;sum_of_products is %d\n&#34;"
+    dst_name "_printf#7"
+  ]
+  edge [
+    source 30
+    target 31
+    weight 1
+    idx 26
+    src_name "&#34;awful_sum_of_prod is %d\n&#34;"
+    dst_name "_printf#8"
+  ]
+]
