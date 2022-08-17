@@ -2,5 +2,14 @@
     "arr_sum.gml": "sum += arr[index]",
     "sum_of_selfprod.gml": "sum += arr[index] * arr[index]",
     "degrees_to_radians.gml": "rad = deg * pi / 180",
-    "radians_to_degrees.gml": "deg = rad * 180 / pi"
+    "radians_to_degrees.gml": "deg = rad * 180 / pi",
+    "get_area.gml": "area = (rad)^2 * pi",
+    "get_arr_average.gml": "average of array",
+    "get_ball_surface.gml": "surf = 4 * (rad)^2 * pi",
+    "get_circum.gml": "circum = 2 * rad * pi",
+    "get_cone_vol.gml": "vol = 1/3 * (rad)^2 * pi * height",
+    "get_cylind_surface.gml": "surf = 2 * (rad)^2 * pi + 2 * rad * pi * height",
+    "get_cylind_vol.gml": "vol = (rad)^2 * pi * height",
+    "get_slope.gml": "(|x1 - y1| + |x2 - y2|...) / size",
+    "get_euclidean.gml": "√(x1 - y1)^2 + (x2 - y2)^2..."
 }
