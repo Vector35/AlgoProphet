@@ -3,6 +3,7 @@ from binaryninja.binaryview import BinaryView
 from . import dfg, graph_match
 import os, sys
 
+from binaryninja.interaction import MultilineTextField, TextLineField
 from binaryninjaui import UIActionHandler, UIAction, UIActionContext
 
 ignore_list = list()
@@ -75,7 +76,40 @@ def function_iterator(bv: BinaryView):
         dfg.clean_data()
                 
 def match_helper(ctx: UIActionContext):
+    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
+        print("click the binary view!!")
+        return
     function_iterator(ctx.binaryView)
+    
+def model_generator(bv, f, instr_list):
+    f_dfg = dfg.read_binaryview(bv, f)
+    print(f_dfg)
+    # start filter dfg with instr_list
+    # cancel would close binary ninja window?
+    
+def build_helper(ctx: UIActionContext):
+    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
+        print("click the binary view!!")
+        return
+    bv = ctx.binaryView
+    func_name = TextLineField("Specify function name")
+    input_list = MultilineTextField("Specify instruction indexes")
+    get_form_input([func_name, input_list], "AlgoProphet")
+    f = bv.get_functions_by_name(func_name.result)[0]
+    print("Build current model on function: ", f.name)
+    print("model instructions: ", input_list.result.split("\n"))
+    md_instr_list = list()
+    for i in input_list.result.split("\n"):
+        if not (i.isdigit()):
+            print(i, " is not a number")
+        else:
+            if (int(i) < 0) or (int(i) >= len(list(f.mlil.ssa_form.instructions))):
+                print(i, " is out of the range of function")
+            else:
+                md_instr_list.append(int(i))
+    model_generator(bv, f, md_instr_list)
                 
-UIAction.registerAction("Match Algos")
-UIActionHandler.globalActions().bindAction("Match Algos", UIAction(match_helper))
+UIAction.registerAction("AlgoProphet: Match Algos")
+UIAction.registerAction("AlgoProphet: Build models")
+UIActionHandler.globalActions().bindAction("AlgoProphet: Match Algos", UIAction(match_helper))
+UIActionHandler.globalActions().bindAction("AlgoProphet: Build a model", UIAction(build_helper))

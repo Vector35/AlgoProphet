@@ -57,8 +57,10 @@ def get_base_type(tg):
         case 5:
             print("Pointer -> enum")
             return tg.width
-        case 6 | 7:
+        case 6:
             return get_base_type(tg.target)
+        case 7:
+            return get_base_type(tg.element_type)
         case 11:
             print("Pointer -> NamedTypeReferenceClass")
             return tg.width
