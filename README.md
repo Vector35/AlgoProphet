@@ -6,13 +6,14 @@ Work in progress :construction_worker_man:
 ## Description
 
 ## Usage
-Add formula of algorithm into `formula.json`.  
+1. Add formula of algorithm into `formula.json`.  
 ```json
 {
     ...existing...,
     "xxx.gml": "rendered form of algorithm",
 }
 ```
+2. If you want to ignore matched instructions in some functions, just add them to `ignore.txt`.
 
 ## License
 

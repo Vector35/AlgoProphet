@@ -31,6 +31,18 @@ graph = nx.DiGraph()
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
+def get_type():
+    tp = 1
+    match tp:
+        case 6:
+            # PointerTypeClass
+            print(6)
+        case 11:
+            # NamedTypeReferenceClass
+            print(11)
+        case _:
+            print("hello")
+
 # each operation should have unique name
 def get_next_opname(operation):
     global arnode
@@ -501,6 +513,9 @@ def read_binaryview(binview, f):
     # remove connected components of cores
     for c in core:
         load_name = core[c]
+        if graph.nodes[load_name]["base_width"] == 0:
+            print("[Exception] %s has load operation with 0 base_width!", f.name)
+            continue
         shift_candidates = list()
         undirected_graph = graph.copy().to_undirected()
         for connected_node in nx.node_connected_component(undirected_graph, c):
@@ -513,7 +528,8 @@ def read_binaryview(binview, f):
         if len(shift_candidates) != 0:
             # heuristics
             shift_ = max(shift_candidates)
-            graph.nodes[load_name]["shift_width"] = shift_
+            if (shift_ / graph.nodes[load_name]["base_width"] >= 1) and (shift_ % graph.nodes[load_name]["base_width"] == 0):
+                graph.nodes[load_name]["shift_width"] = shift_
             
     nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
     

@@ -1,0 +1,17 @@
+register_tm_clones
+deregister_tm_clones
+_init
+_start
+__libc_start_main
+__do_global_dtors_aux
+__cxa_finalize
+__gmon_start__
+__printf_chk
+__stack_chk_fail
+__stack_chk_guard
+_fini
+_ftext
+abort
+call_weak_fn
+frame_dummy
+time

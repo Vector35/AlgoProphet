@@ -1,10 +1,25 @@
 from binaryninja import *
 from binaryninja.binaryview import BinaryView
 from . import dfg, graph_match
+import os, sys
 
 from binaryninjaui import UIActionHandler, UIAction, UIActionContext
 
+ignore_list = list()
 inst_tag_list = dict()
+
+PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+
+'''
+ignore function included in the list
+'''
+def get_ignore_list():
+    global ignore_list
+    with open(os.path.join(PLUGINDIR_PATH, "ignore.txt")) as f:
+        lines = f.readlines()
+        for l in lines:
+            ignore_list.append(l.strip())
+    f.close()
 
 '''
 load previous tag list from bndb
@@ -37,6 +52,7 @@ def matcher(bv: BinaryView, f_dfg, f, user_tag):
         if len(matched_inst) != 0:
             print("AlgoProphet: Find ", matched_model, " in ", f.name)
             for idx in matched_inst:
+                print("Exception: ", idx)
                 address = f.mlil.ssa_form[idx].address
                 print("address: ", hex(address))
                 add_model_tag_to_inst(bv, address, matched_model, user_tag)
@@ -51,7 +67,10 @@ def function_iterator(bv: BinaryView):
     if bv.get_tag_type("AlgoProphet") == None:
         bv.create_tag_type("AlgoProphet", "🥧")
     tag = bv.get_tag_type("AlgoProphet")
+    get_ignore_list()
     for f in bv.functions:
+        if f.name in ignore_list:
+            continue
         matcher(bv, dfg.read_binaryview(bv, f), f, tag)
         dfg.clean_data()
                 
