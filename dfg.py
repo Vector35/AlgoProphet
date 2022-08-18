@@ -31,17 +31,40 @@ graph = nx.DiGraph()
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
-def get_type():
-    tp = 1
-    match tp:
-        case 6:
-            # PointerTypeClass
-            print(6)
+'''
+get base type width by pointer
+VoidTypeClass = 0
+BoolTypeClass = 1
+IntegerTypeClass = 2
+FloatTypeClass = 3
+StructureTypeClass = 4
+EnumerationTypeClass = 5
+PointerTypeClass = 6
+ArrayTypeClass = 7
+x FunctionTypeClass = 8
+x VarArgsTypeClass = 9
+x ValueTypeClass = 10
+NamedTypeReferenceClass = 11
+x WideCharTypeClass = 12
+'''
+def get_base_type(tg):
+    match tg.type_class:
+        case 0 | 1 | 2 | 3:
+            return tg.width
+        case 4:
+            print("Pointer -> struct")
+            return tg.width
+        case 5:
+            print("Pointer -> enum")
+            return tg.width
+        case 6 | 7:
+            return get_base_type(tg.target)
         case 11:
-            # NamedTypeReferenceClass
-            print(11)
+            print("Pointer -> NamedTypeReferenceClass")
+            return tg.width
         case _:
-            print("hello")
+            print("Currently don't handle with type: %d", tg.type_class)
+            return 0
 
 # each operation should have unique name
 def get_next_opname(operation):
@@ -74,7 +97,7 @@ def get_arithmetic(operation):
         # add nodes and edges
         add_node_with_attr(opnode1, opnode2)
         add_edge_node(opnode1, opnode2)
-        add_node_with_attr(str(-1), opnode1)
+        add_node_with_attr(str(-1), opnode1) 
         add_edge_node(str(-1), opnode1)
         return opnode1 + "/" + opnode2
     else:
@@ -167,16 +190,7 @@ def rhs_visit(expr):
             if isinstance(expr.expr_type, PointerType):
                 # this is the pointer
                 pointer_base = str(expr)
-                pointer_type = str(expr.expr_type)
-                # might depend on architecture?
-                if "char" in pointer_type:
-                    current_data_width = 1
-                elif "int" in pointer_type:
-                    current_data_width = 4
-                elif "float" in pointer_type:
-                    current_data_width = 4
-                elif "double" in pointer_type:
-                    current_data_width = 8
+                current_data_width = get_base_type(expr.expr_type)
         return str(expr)
     elif isinstance(expr, MediumLevelILVarSsaField):
         return expr.src.name + "#" + str(expr.src.version)
@@ -194,30 +208,14 @@ def rhs_visit(expr):
         return operation
     elif isinstance(expr, MediumLevelILImport):
         if load_mode == True:
-            pointer_type = str(expr.expr_type)
-            if "char" in pointer_type:
-                current_data_width = 1
-            elif "int" in pointer_type:
-                current_data_width = 4
-            elif "float" in pointer_type:
-                current_data_width = 4
-            elif "double" in pointer_type:
-                current_data_width = 8
+            current_data_width = get_base_type(expr.expr_type)
         return bv.get_data_var_at(expr.constant).name
     elif isinstance(expr, MediumLevelILConstPtr):
         # e.g., a pointer targeting to global constant
         # constant pointer is also an instance of constant
         # so we should put before constant
         if load_mode == True:
-            pointer_type = str(expr.expr_type)
-            if "char" in pointer_type:
-                current_data_width = 1
-            elif "int" in pointer_type:
-                current_data_width = 4
-            elif "float" in pointer_type:
-                current_data_width = 4
-            elif "double" in pointer_type:
-                current_data_width = 8
+            current_data_width = get_base_type(expr.expr_type)
         return str(bv.get_data_var_at(expr.constant).value)
     elif isinstance(expr, Constant):
         if str(expr) not in nodes:
@@ -274,7 +272,9 @@ def inst_visit(ssa):
         case bn.mediumlevelil.MediumLevelILCallSsa:
             func_addr = ssa.dest.constant
             if bv.get_function_at(func_addr) != None:
-                func_name = bv.get_function_at(func_addr).name
+                f = bv.get_function_at(func_addr)
+                func_name = f.name
+                ret_type = get_base_type(f.return_type)
                 f_name = get_next_func(func_name)
                 for param in ssa.params:
                     # add edges
@@ -286,6 +286,10 @@ def inst_visit(ssa):
                         add_node_with_attr(str(param), f_name)
                         # add edges
                         add_edge_node(str(param), f_name)
+                if ret_type == 0:
+                    # return type of function is void
+                    # also means write into nothing
+                    return
                 for dst_var in ssa.vars_written:
                     dvar = dst_var.name + "#" + str(dst_var.version)
                     update_dict(dvar, f_name)
