@@ -1,6 +1,6 @@
 from binaryninja import *
 from binaryninja.binaryview import BinaryView
-from . import dfg, graph_match
+from . import dfg, graph_match, dfg_processor
 import os, sys
 
 from binaryninja.interaction import MultilineTextField, TextLineField
@@ -53,7 +53,6 @@ def matcher(bv: BinaryView, f_dfg, f, user_tag):
         if len(matched_inst) != 0:
             print("AlgoProphet: Find ", matched_model, " in ", f.name)
             for idx in matched_inst:
-                print("Exception: ", idx)
                 address = f.mlil.ssa_form[idx].address
                 print("address: ", hex(address))
                 add_model_tag_to_inst(bv, address, matched_model, user_tag)
@@ -72,7 +71,7 @@ def function_iterator(bv: BinaryView):
     for f in bv.functions:
         if f.name in ignore_list:
             continue
-        matcher(bv, dfg.read_binaryview(bv, f), f, tag)
+        matcher(bv, dfg.read_binaryview(bv, f, []), f, tag)
         dfg.clean_data()
                 
 def match_helper(ctx: UIActionContext):
@@ -81,35 +80,59 @@ def match_helper(ctx: UIActionContext):
         return
     function_iterator(ctx.binaryView)
     
-def model_generator(bv, f, instr_list):
-    f_dfg = dfg.read_binaryview(bv, f)
-    print(f_dfg)
-    # start filter dfg with instr_list
-    # cancel would close binary ninja window?
+def adjust_helper(ctx: UIActionContext):
+    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
+        print("click the binary view!!")
+        return
+    bv = ctx.binaryView
+    func_name = TextLineField("Specify the function name")
+    var_list = MultilineTextField("Ignore variable names")
+    constant_list = MultilineTextField("Ignore constants")
+    get_form_input([func_name, var_list, constant_list], "AlgoProphet")
+    f = bv.get_functions_by_name(func_name.result)[0]
+    print("Adjust current model on function: ", f.name)
+    filter_dict = dict()
+    filter_dict["var_list"] = list()
+    for i in var_list.result.split("\n"):
+        if len(i) != 0:
+            filter_dict["var_list"].append(i)
+    filter_dict["constant_list"] = list()
+    for i in constant_list.result.split("\n"):
+        if len(i) != 0:
+            filter_dict["constant_list"].append(i)
+    dfg_processor.read_dfg(f.name, filter_dict)
     
+def model_generator(bv, f, filter_dict):
+    f_dfg = dfg.read_binaryview(bv, f, filter_dict)
+    print("Please check your visualized model and restart Binary Ninja")
+    print("Also, if you don't like generated models, please remove it and restart Binary Ninja:)")
+
 def build_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
         print("click the binary view!!")
         return
     bv = ctx.binaryView
-    func_name = TextLineField("Specify function name")
+    func_name = TextLineField("Specify the function name")
     input_list = MultilineTextField("Specify instruction indexes")
     get_form_input([func_name, input_list], "AlgoProphet")
     f = bv.get_functions_by_name(func_name.result)[0]
     print("Build current model on function: ", f.name)
     print("model instructions: ", input_list.result.split("\n"))
-    md_instr_list = list()
+    filter_dict = dict()
+    filter_dict["instr_list"] = list()
     for i in input_list.result.split("\n"):
-        if not (i.isdigit()):
+        if not (i.isdigit()) and len(i) != 0:
             print(i, " is not a number")
         else:
             if (int(i) < 0) or (int(i) >= len(list(f.mlil.ssa_form.instructions))):
                 print(i, " is out of the range of function")
             else:
-                md_instr_list.append(int(i))
-    model_generator(bv, f, md_instr_list)
+                filter_dict["instr_list"].append(int(i))
+    model_generator(bv, f, filter_dict)
                 
 UIAction.registerAction("AlgoProphet: Match Algos")
 UIAction.registerAction("AlgoProphet: Build models")
+UIAction.registerAction("AlgoProphet: Adjust Tested models")
 UIActionHandler.globalActions().bindAction("AlgoProphet: Match Algos", UIAction(match_helper))
 UIActionHandler.globalActions().bindAction("AlgoProphet: Build a model", UIAction(build_helper))
+UIActionHandler.globalActions().bindAction("AlgoProphet: Adjust Tested models", UIAction(adjust_helper))

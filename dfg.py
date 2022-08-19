@@ -454,8 +454,19 @@ def clean_data():
     current_load = ""
     current_data_width = 0
     inst_idx = -1
+    
+def filter_graph_by_nodes(filter_node):
+    global graph
+    final_nodes = list()
+    undirgraph = graph.copy().to_undirected()
+    for fn in filter_node:
+        for connode in nx.node_connected_component(undirgraph, fn):
+            if connode not in final_nodes:
+                final_nodes.append(connode)
+    graph = graph.subgraph(final_nodes)
+    print(graph)
 
-def read_binaryview(binview, f):
+def read_binaryview(binview, f, filter_dict):
     global graph, bv, bb_dict, nodes, input_vars, inst_idx
     
     bv = binview
@@ -494,7 +505,7 @@ def read_binaryview(binview, f):
         while idx < bb.end:
             # print("index: ", idx, ": ", str(insts[idx]))
             inst_idx = idx
-            print(str(insts[idx]))
+            # print(str(insts[idx]))
             inst_visit(insts[idx])
             idx += 1
     
@@ -536,7 +547,22 @@ def read_binaryview(binview, f):
             shift_ = max(shift_candidates)
             if (shift_ / graph.nodes[load_name]["base_width"] >= 1) and (shift_ % graph.nodes[load_name]["base_width"] == 0):
                 graph.nodes[load_name]["shift_width"] = shift_
-            
+    
+    if len(filter_dict) != 0:
+        print("Received: ", filter_dict)
+        # get the node with sepcified instruction index
+        filtered_node = list()
+        for i in filter_dict["instr_list"]:
+            for x, y in graph.nodes(data = True):
+                if y['idx'] == i:
+                    filtered_node.append(x)
+        filter_graph_by_nodes(filtered_node)
+        filtered_node.clear()
+        nx.draw(graph, with_labels=True)
+        plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
+        nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
+        return graph
+        
     nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
     
     return graph
