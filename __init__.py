@@ -88,7 +88,8 @@ def adjust_helper(ctx: UIActionContext):
     func_name = TextLineField("Specify the function name")
     var_list = MultilineTextField("Ignore variable names")
     constant_list = MultilineTextField("Ignore constants")
-    get_form_input([func_name, var_list, constant_list], "AlgoProphet")
+    misc_list = MultilineTextField("Ignore based on labels")
+    get_form_input([func_name, var_list, constant_list, misc_list], "AlgoProphet")
     f = bv.get_functions_by_name(func_name.result)[0]
     print("Adjust current model on function: ", f.name)
     filter_dict = dict()
@@ -100,6 +101,10 @@ def adjust_helper(ctx: UIActionContext):
     for i in constant_list.result.split("\n"):
         if len(i) != 0:
             filter_dict["constant_list"].append(i)
+    filter_dict["misc_list"] = list()
+    for i in misc_list.result.split("\n"):
+        if len(i) != 0:
+            filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg(f.name, filter_dict)
     
 def model_generator(bv, f, filter_dict):
@@ -121,7 +126,7 @@ def build_helper(ctx: UIActionContext):
     filter_dict = dict()
     filter_dict["instr_list"] = list()
     for i in input_list.result.split("\n"):
-        if not (i.isdigit()) and len(i) != 0:
+        if (not i.isdigit()) and (len(i) != 0):
             print(i, " is not a number")
         else:
             if (int(i) < 0) or (int(i) >= len(list(f.mlil.ssa_form.instructions))):

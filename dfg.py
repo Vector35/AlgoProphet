@@ -561,6 +561,7 @@ def read_binaryview(binview, f, filter_dict):
         nx.draw(graph, with_labels=True)
         plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
         nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
+        plt.clf()
         return graph
         
     nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
