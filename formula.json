@@ -1,6 +1,6 @@
 {
     "arr_sum.gml": "summation of array: += arr[index]",
-    "sum_of_selfprod.gml": "summation of arr[idx]^2: += arr[index] * arr[index]",
+    "sum_of_selfprod.gml": "summation of arr[idx]^N: += arr[index] * arr[index] *...",
     "degrees_to_radians.gml": "degree -> radian: deg * pi / 180",
     "radians_to_degrees.gml": "radian ->  degree: rad * 180 / pi",
     "get_area.gml": "circle area: (rad)^2 * pi",
@@ -11,5 +11,6 @@
     "get_cylind_surface.gml": "surface of cylinder: 2 * (rad)^2 * pi + 2 * rad * pi * height",
     "get_cylind_vol.gml": "volume of cylinder: (rad)^2 * pi * height",
     "get_slope.gml": "slope: (|x1 - y1| + |x2 - y2|...) / size",
-    "get_euclidean.gml": "euclidean distance: √(x1 - y1)^2 + (x2 - y2)^2..."
+    "get_euclidean.gml": "euclidean distance: √(x1 - y1)^2 + (x2 - y2)^2...",
+    "selfprod.gml": "power of arr[idx]: arr[index] * arr[index] *..."
 }

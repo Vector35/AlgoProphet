@@ -187,7 +187,9 @@ def rhs_visit(expr):
     global pointer_base
     global current_load
     global current_data_width
-    if isinstance(expr, MediumLevelILVarSsa):
+    if isinstance(expr, SSAVariable):
+        return expr.name
+    elif isinstance(expr, MediumLevelILVarSsa):
         if load_mode == True:
             if isinstance(expr.expr_type, PointerType):
                 # this is the pointer
@@ -196,6 +198,8 @@ def rhs_visit(expr):
         return str(expr)
     elif isinstance(expr, MediumLevelILVarSsaField):
         return expr.src.name + "#" + str(expr.src.version)
+    elif isinstance(expr, MediumLevelILVarAliased):
+        return rhs_visit(expr.src)
     elif isinstance(expr, MediumLevelILLoadSsa):
         load_mode = True
         rhs_output_node = rhs_visit(expr.src)
