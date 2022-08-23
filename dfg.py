@@ -26,6 +26,7 @@ opmap = {
     "FSUB": "FADD",
     "DIV": "MUL",
     "FDIV": "FMUL",
+    "DIVS": "MUL",
 }
 
 graph = nx.DiGraph()
@@ -94,7 +95,7 @@ def get_arithmetic(operation):
             nodes.append(str(-1))
         if op in ["SUB", "FSUB"]:
             opnode1 = get_next_opname("MUL")
-        elif op in ["DIV", "FDIV"]:
+        elif op in ["DIV", "FDIV", "DIVS"]:
             opnode1 = get_next_opname("pow")
         opnode2 = get_next_opname(opmap[op])
         # add nodes and edges
