@@ -109,6 +109,7 @@ def adjust_helper(ctx: UIActionContext):
     
 def model_generator(bv, f, filter_dict):
     f_dfg = dfg.read_binaryview(bv, f, filter_dict)
+    dfg.clean_data()
     print("Please check your visualized model and restart Binary Ninja")
     print("Also, if you don't like generated models, please remove it and restart Binary Ninja:)")
 

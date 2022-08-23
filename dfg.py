@@ -1,4 +1,5 @@
 from ctypes import pointer
+from imp import is_frozen
 import os, sys
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -447,6 +448,8 @@ def get_ancestors(n, visited):
 def clean_data():
     global graph, bb_dict, nodes, input_vars, inst_idx, parent_dict, pointer_base, current_load, current_data_width, funnode, arnode
     # clear global variables of previous session
+    if nx.is_frozen(graph):
+        graph = nx.DiGraph(graph)
     graph.clear()
     bb_dict.clear()
     nodes.clear()
