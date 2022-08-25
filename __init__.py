@@ -1,15 +1,31 @@
+from cgi import test
+from select import select
+from tracemalloc import start
 from binaryninja import *
 from binaryninja.binaryview import BinaryView
+from dataclasses import dataclass
 from . import dfg, graph_match, dfg_processor
 import os, sys
+from typing import *
 
 from binaryninja.interaction import MultilineTextField, TextLineField
 from binaryninjaui import UIActionHandler, UIAction, UIActionContext
+from PySide6.QtWidgets import QWidget
 
 ignore_list = list()
 inst_tag_list = dict()
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+
+@dataclass
+class SelectionState:
+    function: MediumLevelILFunction
+    blocks: list
+    instructions: list
+   
+Subject = Union[
+    Function, MediumLevelILFunction, MediumLevelILInstruction, MediumLevelILBasicBlock
+]
 
 '''
 ignore function included in the list
@@ -107,38 +123,118 @@ def adjust_helper(ctx: UIActionContext):
             filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg(f.name, filter_dict)
     
-def model_generator(bv, f, filter_dict):
-    f_dfg = dfg.read_binaryview(bv, f, filter_dict)
-    dfg.clean_data()
-    print("Please check your visualized model and restart Binary Ninja")
-    print("Also, if you don't like generated models, please remove it and restart Binary Ninja:)")
+def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
+    function = block = instruction = None
+    blocks = list()
+    instructions = list()
+    match subject:
+        case [*subjects]:
+            for s in subjects:
+                ms = pre_process(s)
+                assert function is None or ms.function == function
+                function = ms.function
+                instructions.extend(ms.instructions)
+                blocks.extend(ms.blocks)
+        case Function(hlil=hlil):
+            return pre_process(hlil)
+        case MediumLevelILFunction(
+            il_form=FunctionGraphType.MediumLevelILFunctionGraph, ssa_form=ssa_form
+        ):
+            return pre_process(ssa_form)
+        case MediumLevelILFunction(
+            il_form=FunctionGraphType.MediumLevelILSSAFormFunctionGraph
+        ):
+            function = subject.ssa_form
+            instructions = list(function.instructions)
+            blocks = list(function.basic_blocks)
+        case MediumLevelILInstruction(function=il_function):
+            if subject.ssa_form != subject:
+                instructions = [
+                    i
+                    for i in il_function.ssa_form.instructions
+                    if i.non_ssa_form == subject
+                ]
+                return pre_process(instructions)
+            function = il_function.ssa_form
+            instruction = subject.ssa_form
+            block = instruction.il_basic_block
+            instructions = [instruction]
+            blocks = [block]
+        case MediumLevelILBasicBlock(il_function=il_function):
+            function = il_function.ssa_form
+            block = subject
+            blocks = [block]
+            instructions = list(block)
+        case object(source_function=source_function):
+            return pre_process(source_function)
+        case _:
+            raise Exception(f"unrecognized subject type {type(subject)}")
+    return SelectionState(
+        function,
+        blocks,
+        instructions,
+    )
 
+def selection_helper(bv: BinaryView, start: int, end: int) -> None:
+    try:
+        funcs = list()
+        instructions = list()
+        addr = start
+        length = end - addr
+        if length <= bv.get_instruction_length(start):
+            f = bv.get_function_at(start)
+            if f:
+                funcs.append(f)
+                instructions = [i for i in f.mlil.instructions]
+        # if there are no functions or instructions chosen
+        if not funcs or not instructions:
+            # check whether this is valid address
+            while addr < end and bv.is_offset_code_semantics(addr):
+                new_addr = addr + 1
+                for f in bv.get_functions_containing(addr):
+                    if f not in funcs:
+                        funcs.append(f)
+                        new_addr = max(new_addr, f.highest_address)
+                addr = new_addr
+            for f in funcs:
+                if start > f.lowest_address or f.highest_address >= end:
+                    # in this case, we will only take part of func instructions
+                    for i in f.mlil.instructions:
+                        if start <= i.address < end and i not in instructions:
+                            instructions.append(i)
+                else:
+                    # otherwise, we would take whole func instructions
+                    for i in f.mlil.instructions:
+                        if i not in instructions:
+                            instructions.append(i)
+        ms = pre_process(instructions)
+
+        filter_dict = dict()
+        filter_dict["instr_list"] = list()
+        mlil_idx = [i.instr_index for i in ms.instructions]
+        filter_dict["instr_list"].extend(mlil_idx)
+        
+        dfg.read_binaryview(bv, ms.function, filter_dict)
+        dfg.clean_data()
+    except:
+        traceback.print_exc()
+    
 def build_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
         print("click the binary view!!")
         return
-    bv = ctx.binaryView
-    func_name = TextLineField("Specify the function name")
-    input_list = MultilineTextField("Specify instruction indexes")
-    get_form_input([func_name, input_list], "AlgoProphet")
-    f = bv.get_functions_by_name(func_name.result)[0]
-    print("Build current model on function: ", f.name)
-    print("model instructions: ", input_list.result.split("\n"))
-    filter_dict = dict()
-    filter_dict["instr_list"] = list()
-    for i in input_list.result.split("\n"):
-        if (not i.isdigit()) and (len(i) != 0):
-            print(i, " is not a number")
-        else:
-            if (int(i) < 0) or (int(i) >= len(list(f.mlil.ssa_form.instructions))):
-                print(i, " is out of the range of function")
-            else:
-                filter_dict["instr_list"].append(int(i))
-    model_generator(bv, f, filter_dict)
+    selection_helper(ctx.binaryView, ctx.address, ctx.address + ctx.length)
+    
+def rk_build_helper(bv, start, length):
+    selection_helper(bv, start, start + length)
                 
 UIAction.registerAction("AlgoProphet: Match Algos")
-UIAction.registerAction("AlgoProphet: Build models")
 UIAction.registerAction("AlgoProphet: Adjust Tested models")
+UIAction.registerAction("AlgoProphet: Build a model")
 UIActionHandler.globalActions().bindAction("AlgoProphet: Match Algos", UIAction(match_helper))
 UIActionHandler.globalActions().bindAction("AlgoProphet: Build a model", UIAction(build_helper))
 UIActionHandler.globalActions().bindAction("AlgoProphet: Adjust Tested models", UIAction(adjust_helper))
+
+PluginCommand.register_for_range(
+    "AlgoProphet\\Build a model", "Build DFG model based on specified instructions", rk_build_helper
+)

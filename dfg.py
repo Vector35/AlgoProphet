@@ -474,10 +474,12 @@ def filter_graph_by_nodes(filter_node):
     graph = graph.subgraph(final_nodes)
     print(graph)
 
-def read_binaryview(binview, f, filter_dict):
+def read_binaryview(binview, mlil_func, filter_dict):
     global graph, bv, bb_dict, nodes, input_vars, inst_idx
     
     bv = binview
+    
+    f = mlil_func.source_function
     
     bb_order, bb_dict = topo_order(f.mlil.ssa_form)
     

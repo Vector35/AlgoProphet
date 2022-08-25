@@ -33,16 +33,23 @@ graph [
   ]
   node [
     id 4
+    label "0"
+    type "constant"
+    value "0"
+    idx 14
+  ]
+  node [
+    id 5
     label "ADD#1"
     type "operation"
     value "ADD"
     idx 14
   ]
   node [
-    id 5
-    label "0"
-    type "constant"
-    value "0"
+    id 6
+    label "MUL#0"
+    type "operation"
+    value "MUL"
     idx 14
   ]
   edge [
@@ -55,11 +62,11 @@ graph [
   ]
   edge [
     source 1
-    target 4
-    weight 1
+    target 6
+    weight 2
     idx 14
     src_name "load#0"
-    dst_name "ADD#1"
+    dst_name "MUL#0"
   ]
   edge [
     source 3
@@ -70,11 +77,19 @@ graph [
     dst_name "ADD#0"
   ]
   edge [
-    source 5
-    target 4
+    source 4
+    target 5
     weight 1
     idx 14
     src_name "0"
+    dst_name "ADD#1"
+  ]
+  edge [
+    source 6
+    target 5
+    weight 1
+    idx 14
+    src_name "MUL#0"
     dst_name "ADD#1"
   ]
 ]

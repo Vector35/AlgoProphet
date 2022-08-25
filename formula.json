@@ -13,5 +13,6 @@
     "get_slope.gml": "slope: (|x1 - y1| + |x2 - y2|...) / size",
     "get_euclidean.gml": "euclidean distance: sqrt( (x1 - y1)^2 + (x2 - y2)^2... )",
     "selfprod.gml": "power of arr[idx]: arr[index] * arr[index] *...",
-    "get_percentage.gml": "Percentage%: a/b * 100"
+    "get_percentage.gml": "Percentage%: a/b * 100",
+    "sum_with_idx.gml": "test demo"
 }
