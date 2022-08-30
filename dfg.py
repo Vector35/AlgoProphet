@@ -446,6 +446,15 @@ def get_ancestors(n, visited):
         visited = get_ancestors(v, visited)
     return visited
 
+def add_out_to_nodes():
+    global graph
+    for node in graph.nodes():
+        if graph.out_degree(node) == 0:
+            # it should be the result of one algorithm
+            graph.nodes[node]["output"] = True
+        else:
+            graph.nodes[node]["output"] = False
+
 def clean_data():
     global graph, bb_dict, nodes, input_vars, inst_idx, parent_dict, pointer_base, current_load, current_data_width, funnode, arnode
     # clear global variables of previous session
@@ -557,6 +566,9 @@ def read_binaryview(binview, mlil_func, filter_dict):
             shift_ = max(shift_candidates)
             if (shift_ / graph.nodes[load_name]["base_width"] >= 1) and (shift_ % graph.nodes[load_name]["base_width"] == 0):
                 graph.nodes[load_name]["shift_width"] = shift_
+    
+    # add attributes of output
+    add_out_to_nodes()
     
     if len(filter_dict) != 0:
         print("Received: ", filter_dict)

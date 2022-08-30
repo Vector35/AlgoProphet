@@ -50,13 +50,15 @@ def match(target):
     models = dict()
     for model_gml in os.listdir(os.path.join(PLUGINDIR_PATH, "models")):
         if model_gml.split(".")[-1] == "gml":
-            models[ formula[model_gml][0] ] = nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml))
+            models[ formula[model_gml][0] ] = list()
+            models[ formula[model_gml][0] ].append( nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml)) )
+            models[ formula[model_gml][0] ].append( formula[model_gml][1] )
 
     matched_result = dict()
     
     for model_name, model in models.items():
         # graph matcher
-        gm = isomorphism.DiGraphMatcher(target, model, node_match=node_match)
+        gm = isomorphism.DiGraphMatcher(target, model[0], node_match=node_match)
         if gm.subgraph_is_isomorphic() == True:
             for matched_list in list(gm.subgraph_isomorphisms_iter()):
                 sg = list()
@@ -68,5 +70,13 @@ def match(target):
                     if "idx" in data and data["idx"] not in inst_list:
                         if data["idx"] not in inst_list:
                             inst_list.append(data["idx"])
-                matched_result[model_name] = inst_list
+                matched_result[model_name] = list()
+                matched_result[model_name].append(inst_list)
+                matched_result[model_name].append(model[1])
+                
+    for model_name, matched_data in matched_result.items():
+        print(f"model name: {model_name}")
+        print(f"instr: {matched_data[0]}")
+        print(f"dest: {matched_data[1]}")
+    
     return matched_result
