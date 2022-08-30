@@ -50,7 +50,7 @@ def match(target):
     models = dict()
     for model_gml in os.listdir(os.path.join(PLUGINDIR_PATH, "models")):
         if model_gml.split(".")[-1] == "gml":
-            models[ formula[model_gml] ] = nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml))
+            models[ formula[model_gml][0] ] = nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml))
 
     matched_result = dict()
     

@@ -1,18 +1,62 @@
 {
-    "arr_sum.gml": "summation of array: += arr[index]",
-    "sum_of_selfprod.gml": "summation of arr[idx]^N: += arr[index] * arr[index] *...",
-    "degrees_to_radians.gml": "degree -> radian: deg * pi / 180",
-    "radians_to_degrees.gml": "radian ->  degree: rad * 180 / pi",
-    "get_area.gml": "circle area: (rad)^2 * pi",
-    "get_arr_average.gml": "average of array",
-    "get_ball_surface.gml": "surf of ball: 4 * (rad)^2 * pi",
-    "get_circum.gml": "circum = 2 * rad * pi",
-    "get_cone_vol.gml": "volume of cone: 1/3 * (rad)^2 * pi * height",
-    "get_cylind_surface.gml": "surface of cylinder: 2 * (rad)^2 * pi + 2 * rad * pi * height",
-    "get_cylind_vol.gml": "volume of cylinder: (rad)^2 * pi * height",
-    "get_slope.gml": "slope: (|x1 - y1| + |x2 - y2|...) / size",
-    "get_euclidean.gml": "euclidean distance: sqrt( (x1 - y1)^2 + (x2 - y2)^2... )",
-    "selfprod.gml": "power of arr[idx]: arr[index] * arr[index] *...",
-    "get_percentage.gml": "Percentage%: a/b * 100",
-    "sum_with_idx.gml": "test demo"
+    "arr_sum.gml": [
+        "summation of array: += arr[index]",
+        "arr_sum"
+    ],
+    "sum_of_selfprod.gml": [
+        "summation of arr[idx]^N: += arr[index] * arr[index] *...",
+        "arr_sum"
+    ],
+    "degrees_to_radians.gml": [
+        "degree -> radian: deg * pi / 180",
+        "degree"
+    ],
+    "radians_to_degrees.gml": [
+        "radian ->  degree: rad * 180 / pi",
+        "radian"
+    ],
+    "get_area.gml": [
+        "circle area: (rad)^2 * pi",
+        "area"
+    ],
+    "get_arr_average.gml": [
+        "average of array",
+        "arr_average"
+    ],
+    "get_ball_surface.gml": [
+        "surf of ball: 4 * (rad)^2 * pi",
+        "ball_surf"
+    ],
+    "get_circum.gml": [
+        "circum = 2 * rad * pi",
+        "circum"
+    ],
+    "get_cone_vol.gml": [
+        "volume of cone: 1/3 * (rad)^2 * pi * height",
+        "cone_vol"
+    ],
+    "get_cylind_surface.gml": [
+        "surface of cylinder: 2 * (rad)^2 * pi + 2 * rad * pi * height",
+        "cylinder_surf"
+    ],
+    "get_cylind_vol.gml": [
+        "volume of cylinder: (rad)^2 * pi * height",
+        "cylinder_vol"
+    ],
+    "get_slope.gml": [
+        "slope: (|x1 - y1| + |x2 - y2|...) / size",
+        "slope"
+    ],
+    "get_euclidean.gml": [
+        "euclidean distance: sqrt( (x1 - y1)^2 + (x2 - y2)^2... )",
+        "euclid_dist"
+    ],
+    "selfprod.gml": [
+        "power of arr[idx]: arr[index] * arr[index] *...",
+        "pow_of_arr_element"
+    ],
+    "get_percentage.gml": [
+        "Percentage%: a/b * 100",
+        "percentage"
+    ]
 }

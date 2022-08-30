@@ -574,6 +574,6 @@ def read_binaryview(binview, mlil_func, filter_dict):
         plt.clf()
         return graph
         
-    nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
+    #nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
     
     return graph

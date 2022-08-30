@@ -35,7 +35,9 @@ def get_ignore_list():
     with open(os.path.join(PLUGINDIR_PATH, "ignore.txt")) as f:
         lines = f.readlines()
         for l in lines:
-            ignore_list.append(l.strip())
+            e = l.strip()
+            if e not in ignore_list:
+                ignore_list.append(e)
     f.close()
 
 '''
@@ -81,13 +83,13 @@ def function_iterator(bv: BinaryView):
     print(bv)
     # create user tag if not exist
     if bv.get_tag_type("AlgoProphet") == None:
-        bv.create_tag_type("AlgoProphet", "🥧")
+        bv.create_tag_type("AlgoProphet", "Σ")
     tag = bv.get_tag_type("AlgoProphet")
     get_ignore_list()
     for f in bv.functions:
         if f.name in ignore_list:
             continue
-        matcher(bv, dfg.read_binaryview(bv, f, []), f, tag)
+        matcher(bv, dfg.read_binaryview(bv, f.mlil, []), f, tag)
         dfg.clean_data()
                 
 def match_helper(ctx: UIActionContext):
@@ -95,6 +97,18 @@ def match_helper(ctx: UIActionContext):
         print("click the binary view!!")
         return
     function_iterator(ctx.binaryView)
+    
+def rk_match_helper(bv: BinaryView, func: Function):
+    print(bv)
+    # create user tag if not exist
+    if bv.get_tag_type("AlgoProphet") == None:
+        bv.create_tag_type("AlgoProphet", "Σ")
+    tag = bv.get_tag_type("AlgoProphet")
+    get_ignore_list()
+    if func.name in ignore_list:
+        return
+    matcher(bv, dfg.read_binaryview(bv, func.mlil, []), func, tag)
+    dfg.clean_data()
     
 def adjust_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
@@ -122,6 +136,9 @@ def adjust_helper(ctx: UIActionContext):
         if len(i) != 0:
             filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg(f.name, filter_dict)
+    # h = ctx.token
+    # token_name = h.token.text
+    # token_type = h.token.type
     
 def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
     function = block = instruction = None
@@ -228,13 +245,16 @@ def build_helper(ctx: UIActionContext):
 def rk_build_helper(bv, start, length):
     selection_helper(bv, start, start + length)
                 
-UIAction.registerAction("AlgoProphet: Match Algos")
-UIAction.registerAction("AlgoProphet: Adjust Tested models")
-UIAction.registerAction("AlgoProphet: Build a model")
-UIActionHandler.globalActions().bindAction("AlgoProphet: Match Algos", UIAction(match_helper))
-UIActionHandler.globalActions().bindAction("AlgoProphet: Build a model", UIAction(build_helper))
-UIActionHandler.globalActions().bindAction("AlgoProphet: Adjust Tested models", UIAction(adjust_helper))
+UIAction.registerAction("AlgoProphet - Match Algos")
+UIAction.registerAction("AlgoProphet - Adjust Tested models")
+UIAction.registerAction("AlgoProphet - Build a model")
+UIActionHandler.globalActions().bindAction("AlgoProphet - Match Algos", UIAction(match_helper))
+UIActionHandler.globalActions().bindAction("AlgoProphet - Build a model", UIAction(build_helper))
+UIActionHandler.globalActions().bindAction("AlgoProphet - Adjust Tested models", UIAction(adjust_helper))
 
+PluginCommand.register_for_function(
+    "AlgoProphet\\Match Algos", "Match current function with existing models", rk_match_helper
+)
 PluginCommand.register_for_range(
     "AlgoProphet\\Build a model", "Build DFG model based on specified instructions", rk_build_helper
 )
