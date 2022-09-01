@@ -65,10 +65,6 @@ def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
     inst_tag_list[addr].append(model)
     bv.create_user_data_tag(addr, user_tag, f'{model}')
 
-
-def rename_queue(target_var, assigned_var):
-    target_var.name = assigned_var
-
 def matcher(bv: BinaryView, f_dfg, f, user_tag):
     for matched_model, matched_inst_dest in graph_match.match(f_dfg).items():
         if len(matched_inst_dest) != 0:
