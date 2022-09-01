@@ -9,7 +9,7 @@ import os, sys
 from typing import *
 
 from binaryninja.interaction import MultilineTextField, TextLineField
-from binaryninjaui import UIActionHandler, UIAction, UIActionContext
+from binaryninjaui import UIActionHandler, UIAction, UIActionContext, UIContext
 from PySide6.QtWidgets import QWidget
 
 ignore_list = list()
@@ -107,7 +107,6 @@ def match_helper(ctx: UIActionContext):
     function_iterator(ctx.binaryView)
     
 def rk_match_helper(bv: BinaryView, func: Function):
-    print(bv)
     # create user tag if not exist
     if bv.get_tag_type("AlgoProphet") == None:
         bv.create_tag_type("AlgoProphet", chr(0x2140))
@@ -117,7 +116,7 @@ def rk_match_helper(bv: BinaryView, func: Function):
         return
     matcher(bv, dfg.read_binaryview(bv, func.mlil, []), func, tag)
     dfg.clean_data()
-    
+
 def adjust_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
         print("click the binary view!!")
@@ -144,9 +143,30 @@ def adjust_helper(ctx: UIActionContext):
         if len(i) != 0:
             filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg(f.name, filter_dict)
-    # h = ctx.token
-    # token_name = h.token.text
-    # token_type = h.token.type
+    
+def rk_adjust_helper(bv: BinaryView, func: Function):
+    uc = UIContext.activeContext()
+    cv = uc.getCurrentView()
+    hts = cv.getHighlightTokenState()
+    ah = uc.getCurrentActionHandler()
+    ctx = ah.actionContext()
+    
+    h = ctx.token
+    token_name = h.token.text
+    token_type = h.token.type
+    print(f"I want to adjust token: {token_name} with type: {token_type}")
+    
+def rkop_adjust_helper(bv: BinaryView, func: Function):
+    uc = UIContext.activeContext()
+    cv = uc.getCurrentView()
+    hts = cv.getHighlightTokenState()
+    ah = uc.getCurrentActionHandler()
+    ctx = ah.actionContext()
+    
+    h = ctx.token
+    token_name = h.token.text
+    token_var = h.localVar
+    print(f"{token_name}")
     
 def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
     function = block = instruction = None
@@ -265,4 +285,10 @@ PluginCommand.register_for_function(
 )
 PluginCommand.register_for_range(
     "AlgoProphet\\Build a model", "Build DFG model based on specified instructions", rk_build_helper
+)
+PluginCommand.register_for_function(
+    "AlgoProphet\\Adjust a model\\SSAVars or Constants", "Adjust the model for current function", rk_adjust_helper
+)
+PluginCommand.register_for_function(
+    "AlgoProphet\\Adjust a model\\Operations", "Adjust the model for current fuinction", rkop_adjust_helper
 )

@@ -481,7 +481,7 @@ def filter_graph_by_nodes(filter_node):
             if connode not in final_nodes:
                 final_nodes.append(connode)
     graph = graph.subgraph(final_nodes)
-    print(graph)
+    print(graph)    
 
 def read_binaryview(binview, mlil_func, filter_dict):
     global graph, bv, bb_dict, nodes, input_vars, inst_idx
