@@ -6,6 +6,7 @@ graph [
     type "ssavar"
     value "arr#0"
     idx 13
+    output 0
   ]
   node [
     id 1
@@ -16,6 +17,7 @@ graph [
     base "x8#2"
     base_width 4
     shift_width 4
+    output 0
   ]
   node [
     id 2
@@ -23,6 +25,7 @@ graph [
     type "operation"
     value "ADD"
     idx 13
+    output 1
   ]
   node [
     id 3
@@ -30,6 +33,7 @@ graph [
     type "constant"
     value "4"
     idx 13
+    output 0
   ]
   node [
     id 4
@@ -37,6 +41,7 @@ graph [
     type "constant"
     value "0"
     idx 14
+    output 0
   ]
   node [
     id 5
@@ -44,6 +49,7 @@ graph [
     type "operation"
     value "ADD"
     idx 14
+    output 1
   ]
   node [
     id 6
@@ -51,6 +57,7 @@ graph [
     type "operation"
     value "MUL"
     idx 14
+    output 0
   ]
   edge [
     source 0

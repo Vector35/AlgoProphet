@@ -26,7 +26,7 @@ def adjust_dfg(func_name, dfgraph, filter_dict):
     nx.write_gml(dfgraph, os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml"))
     plt.clf()
 
-def read_dfg(func_name, filter_dict):
+def read_dfg_with_fdict(func_name, filter_dict):
     gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
     png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
     if os.path.exists(gml_name) == False:
@@ -37,3 +37,40 @@ def read_dfg(func_name, filter_dict):
     os.remove(gml_name)
     os.remove(png_name)
     adjust_dfg(func_name, dfgraph, filter_dict)
+
+def rk_get_op(dfgraph, label):
+    if dfgraph.nodes[label]["type"] == "operation":
+        return label
+    e = dfgraph.out_edges(label)
+    print(type(e))
+    print(e)
+    if len(e) == 0:
+        return None
+    return rk_get_op(dfgraph, list(e)[0][1])
+
+def rk_read_dfg(func_name, label, rm_op):
+    gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
+    png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
+    if os.path.exists(gml_name) == False:
+        print("Model not exists, please check test folder")
+        return
+    dfgraph = nx.read_gml(gml_name)
+    if not dfgraph.has_node(label):
+        print(f"Cannot find node {label}")
+        return
+    if rm_op == True:
+        # this is used for removing operation nodes
+        closest_op = rk_get_op(dfgraph, label)
+        if closest_op == None:
+            print(f"Cannot find related operation nodes for {label}")
+            return
+        label = closest_op
+    # remove nodes from graph
+    dfgraph.remove_node(label)
+    nx.draw(dfgraph, with_labels=True)
+    # delete file after read
+    os.remove(gml_name)
+    os.remove(png_name)
+    plt.savefig(os.path.join(PLUGINDIR_PATH, "test", func_name + ".png"))
+    nx.write_gml(dfgraph, os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml"))
+    plt.clf()

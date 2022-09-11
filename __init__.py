@@ -1,4 +1,5 @@
 from cgi import test
+from lib2to3.pgen2 import token
 from select import select
 from tracemalloc import start
 from binaryninja import *
@@ -138,7 +139,7 @@ def adjust_helper(ctx: UIActionContext):
     for i in misc_list.result.split("\n"):
         if len(i) != 0:
             filter_dict["misc_list"].append(i)
-    dfg_processor.read_dfg(f.name, filter_dict)
+    dfg_processor.read_dfg_with_fdict(f.name, filter_dict)
     
 def rk_adjust_helper(bv: BinaryView, func: Function):
     uc = UIContext.activeContext()
@@ -148,11 +149,12 @@ def rk_adjust_helper(bv: BinaryView, func: Function):
     ctx = ah.actionContext()
     
     h = ctx.token
+    f = ctx.function.name
     token_name = h.token.text
     token_type = h.token.type
-    print(f"I want to adjust token: {token_name} with type: {token_type}")
-    
-def rkop_adjust_helper(bv: BinaryView, func: Function):
+    dfg_processor.rk_read_dfg(f, token_name, False)
+
+def rkop_adjust_helper(bv: BinaryView, instr: MediumLevelILInstruction):
     uc = UIContext.activeContext()
     cv = uc.getCurrentView()
     hts = cv.getHighlightTokenState()
@@ -160,9 +162,10 @@ def rkop_adjust_helper(bv: BinaryView, func: Function):
     ctx = ah.actionContext()
     
     h = ctx.token
+    f = ctx.function.name
     token_name = h.token.text
     token_var = h.localVar
-    print(f"{token_name}")
+    dfg_processor.rk_read_dfg(f, token_name, True)
     
 def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
     function = block = instruction = None
@@ -285,6 +288,6 @@ PluginCommand.register_for_range(
 PluginCommand.register_for_function(
     "AlgoProphet\\Adjust a model\\SSAVars or Constants", "Adjust the model for current function", rk_adjust_helper
 )
-PluginCommand.register_for_function(
+PluginCommand.register_for_medium_level_il_instruction(
     "AlgoProphet\\Adjust a model\\Operations", "Adjust the model for current fuinction", rkop_adjust_helper
 )
