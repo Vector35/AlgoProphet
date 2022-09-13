@@ -58,5 +58,9 @@
     "get_percentage.gml": [
         "Percentage%: a/b * 100",
         "percentage"
+    ],
+    "DFT.gml": [
+        "dft",
+        "dft" 
     ]
 }
