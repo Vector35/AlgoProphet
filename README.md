@@ -11,20 +11,21 @@ Currently AlgoProphet provides three functionalities:
 
 ## Match functions with existing models
 In the `models/` of your plugin folder, you can find our existing models in gml format.  
-![](./screenshots/existing-models.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/existing-models.png" width=60% height=60%>
+
 To match current function with existing models, you can right click(at any places of the function) to get the plugin menu: `Plugins > AlgoProphet > Match Algos`.  
-![](./screenshots/rk-match-models.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/rk-match-models.png" width=60% height=60%>  
 What will happen next is that `tags` would be created. The content of tag would describe which model is likely to be found at the address. In the screenshot, AlgoProphet finds the summation of the array elements at the statement.  
-![](./screenshots/match-model-result.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/match-model-result.png" width=60% height=60%>  
 You can also find that the some variable name would be **renamed** to a *meaningful* one. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. With this work, user can identify that this variable might be used for the sum of the array.
 
 > If you want to ignore matched instructions in some functions, just add them to `ignore.txt`.
 
 ## Build a model based on highlighted instructions
 To build a model (customize the algorithm you want to find from other binaries), you can highlight multiple instructions which you think are important features for the algorithm, and right click to get the plugin menu: `Plugins > AlgoProphet > Build a model`.  
-![](./screenshots/highlight-build-model.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/highlight-build-model.png" width=60% height=60%>  
 Next, you can find your generated model(`.gml` and visualized graph) in `test/` of plugin folder.  
-![](./screenshots/generated-model.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/generated-model.png" width=60% height=60%>  
 In the screenshot, generated model is `sum_with_idx.gml` and `sum_with_idx.png` as the visualized result.  
 
 After making sure that it is the model you want to use  
@@ -46,16 +47,17 @@ AlgoProphet will scan the existing models in `models/` to match algorithms.
 ## Adjust a model
 It is hard to build model perfectly at the first time, so we build up an interactive window for users to decide what nodes they want to remove from their models.
 > here comes a hint for generating good model: keep it as simple as possible
+
 First, before we adjust a model, make sure that you have existing model put in `test/`. You can also move the model back from `models/`.  
 Back to the generated model in previous section, we think that the subgraph which includes `arr#0`, `4`, and `ADD#0` is not important for this algorithm(summation of array).  
 To adjust our model, you can right click(at any places of the function) to get the plugin menu: `Plugins > AlgoProphet > Adjust a model`. We can choose to remove either `Operations` or `SSAVars or Constants`.  
-![](./screenshots/adjust-constants.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjust-constants.png" width=60% height=60%>  
 In screenshot, we pick `SSAVars or Constants` in order to remove `4` from our model.  
-![](./screenshots/adjusted-model.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjusted-model.png" width=60% height=60%>  
 From the screenshot, we can find that `4` is already removed from the graph model. You can also use the same way to remove other `SSAVars`.  
 Of course, you can just re-create a new model by highlighting different instructions, but if you want to partial nodes from instructions (e.g., you might want to remove `0` from model, but keep `load#0`), then adjust model would be your best tool!  
 Another option is to remove `Operations` such as `load#?` or `ADD#?` from the model. It is invisible to pick from binary view, so we provide an *indirect* way to do it. Assume we want to remove `ADD#0` from the model, and we also know that it is the operator of `arr#0`(from visualized result), we can right-click on `arr#0` and choose the option of `Operations`.  
-![](./screenshots/adjusted-op-model.png)  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjusted-op-model.png" height=60% width=60%>  
 From the screenshot, we can find that `ADD#0` has been removed from the model.  
 After adjusting your model, remember to put it back to `models/` before `Match Algos`, also keep the information in `formula.json` and your model consistent.
 
