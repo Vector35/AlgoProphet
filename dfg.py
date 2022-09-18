@@ -49,7 +49,7 @@ x ValueTypeClass = 10
 NamedTypeReferenceClass = 11
 x WideCharTypeClass = 12
 '''
-def get_base_type(tg):
+def get_base_type(tg) -> int:
     match tg.type_class:
         case 0 | 1 | 2 | 3:
             return tg.width
@@ -71,7 +71,7 @@ def get_base_type(tg):
             return 0
 
 # each operation should have unique name
-def get_next_opname(operation):
+def get_next_opname(operation) -> str:
     global arnode
     if operation in arnode:
         arnode[operation] += 1
@@ -79,7 +79,7 @@ def get_next_opname(operation):
         arnode[operation] = 0
     return operation + "#" + str(arnode[operation])
 
-def get_next_func(fun):
+def get_next_func(fun) -> str:
     global funnode
     if fun in funnode:
         funnode[fun] += 1
@@ -87,7 +87,7 @@ def get_next_func(fun):
         funnode[fun] = 0
     return fun + "#" + str(funnode[fun])
 
-def get_arithmetic(operation):
+def get_arithmetic(operation) -> str:
     global graph
     op = str(operation).split(".")[1][5:]
     if op in opmap.keys():
@@ -107,14 +107,14 @@ def get_arithmetic(operation):
     else:
         return get_next_opname(op)
 
-def update_dict(node, parent):
+def update_dict(node, parent) -> None:
     global parent_dict
     if node not in parent_dict:
         parent_dict[node] = []
     if parent not in parent_dict[node]:
         parent_dict[node].append(parent)
 
-def get_top_parents(node, parents):
+def get_top_parents(node, parents) -> list[str]:
     if str(node) in nodes:
         parents.append(node)
     else:
@@ -123,7 +123,7 @@ def get_top_parents(node, parents):
                 parents = get_top_parents(p, parents)
     return parents
 
-def add_node_with_attr(node1, node2):
+def add_node_with_attr(node1, node2) -> None:
     global graph, input_vars, pointer_base, current_data_width
     # add two nodes to graph
     for node in [node1, node2]:
@@ -137,7 +137,7 @@ def add_node_with_attr(node1, node2):
             else:
                 graph.add_node(node, type="operation", value=node.split('#')[0], idx=inst_idx)
 
-def add_edge_node(node1, node2):
+def add_edge_node(node1, node2) -> None:
     global graph
     if "#" in str(node1):
         hash_node1 = node1.split("#")[0]
@@ -168,7 +168,7 @@ def add_edge_node(node1, node2):
                 graph.add_edge(in_edge[0], node2, weight=graph[in_edge[0]][node1]["weight"], idx=inst_idx, src_name=in_edge[0], dst_name=node2)
         graph.remove_node(node1)
 
-def bridge_parent_to_arith(operand, arith):
+def bridge_parent_to_arith(operand, arith) -> None:
     global graph
     for parent in get_top_parents(operand, list()):
         # add edges
@@ -181,7 +181,37 @@ def bridge_parent_to_arith(operand, arith):
             # add edges
             add_edge_node(parent, arith)
 
-def rhs_visit(expr):
+'''
+represent graph in diff ways based on function
+'''
+def function_handler(ssa, fname) -> None:
+    global graph
+    global nodes
+    global parent_dict
+    if "sincos" in fname:
+        # first parameter is parameter sin and cos
+        param = ssa.params[0]
+        fsin = get_next_func("sin")
+        fcos = get_next_func("cos")
+        nodes.append(fsin)
+        nodes.append(fcos)
+        graph.add_node(fsin, type="operation", value="sin", idx=inst_idx)
+        graph.add_node(fcos, type="operation", value="cos", idx=inst_idx)
+        for i in get_top_parents(str(param), list()):
+            add_edge_node(i, fsin)
+            add_edge_node(i, fcos)
+        sin_param = ssa.params[1]
+        cos_param = ssa.params[2]
+        update_dict(str(sin_param), fsin)
+        update_dict(str(cos_param), fcos)
+    else:
+        for param in ssa.params:
+            # add nodes
+            add_node_with_attr(str(param), fname)
+            # add edges
+            add_edge_node(str(param), fname)
+
+def rhs_visit(expr) -> str:
     global graph
     global nodes
     global parent_dict
@@ -266,7 +296,7 @@ def rhs_visit(expr):
                 bridge_parent_to_arith(rhs_operand, arithmetic)
         return arithmetic
 
-def inst_visit(ssa):
+def inst_visit(ssa) -> None:
     global graph
     global nodes
     global parent_dict
@@ -284,16 +314,8 @@ def inst_visit(ssa):
                 func_name = f.name
                 ret_type = get_base_type(f.return_type)
                 f_name = get_next_func(func_name)
-                for param in ssa.params:
-                    # add edges
-                    if graph.has_edge(str(param), f_name):
-                        w = graph[str(param)][f_name]["weight"]
-                        graph[str(param)][f_name]["weight"] = w + 1
-                    else:
-                        # add nodes
-                        add_node_with_attr(str(param), f_name)
-                        # add edges
-                        add_edge_node(str(param), f_name)
+                # handle function with passed parameters
+                function_handler(ssa, f_name)
                 if ret_type == 0:
                     # return type of function is void
                     # also means write into nothing
@@ -346,7 +368,15 @@ def inst_visit(ssa):
                 update_dict(lvar, rhs_output_node)
                 return
             elif isinstance(rhs, MediumLevelILVarSsa):
-                update_dict(lvar, str(rhs))
+                ssa_var_read = ssa.vars_read
+                if len(ssa_var_read) == 1:
+                    update_dict(lvar, ssa_var_read[0].var)
+                return
+            elif isinstance(rhs, MediumLevelILAddressOf):
+                update_dict(rhs.vars_read[0].name, lvar)
+                return
+            elif isinstance(rhs, MediumLevelILVarAliased):
+                update_dict(lvar, rhs.vars_read[0].name)
                 return
             elif isinstance(rhs, Arithmetic):
                 rhs_output_node = rhs_visit(rhs)
@@ -471,17 +501,6 @@ def clean_data():
     current_load = ""
     current_data_width = 0
     inst_idx = -1
-    
-def filter_graph_by_nodes(filter_node):
-    global graph
-    final_nodes = list()
-    undirgraph = graph.copy().to_undirected()
-    for fn in filter_node:
-        for connode in nx.node_connected_component(undirgraph, fn):
-            if connode not in final_nodes:
-                final_nodes.append(connode)
-    graph = graph.subgraph(final_nodes)
-    print(graph)    
 
 def read_binaryview(binview, mlil_func, filter_dict):
     global graph, bv, bb_dict, nodes, input_vars, inst_idx
@@ -573,13 +592,16 @@ def read_binaryview(binview, mlil_func, filter_dict):
     if len(filter_dict) != 0:
         print("Received: ", filter_dict)
         # get the node with sepcified instruction index
-        filtered_node = list()
-        for i in filter_dict["instr_list"]:
-            for x, y in graph.nodes(data = True):
-                if y['idx'] == i:
-                    filtered_node.append(x)
-        filter_graph_by_nodes(filtered_node)
-        filtered_node.clear()
+        filtered_edges = list()
+        for src, dest, data in graph.edges(data=True):
+            if (data["idx"] < filter_dict["instr_list"][0]) or (data["idx"] > filter_dict["instr_list"][-1]):
+                filtered_edges.append( (src, dest) )
+        graph.remove_edges_from(filtered_edges)
+        filtered_nodes = list()
+        for node, data in graph.nodes(data=True):
+            if (len(graph.in_edges(node)) == 0) and (len(graph.out_edges(node)) == 0):
+                filtered_nodes.append(node)
+        graph.remove_nodes_from(filtered_nodes)
         nx.draw(graph, with_labels=True)
         plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
         nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
