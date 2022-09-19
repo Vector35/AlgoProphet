@@ -59,8 +59,8 @@
         "Percentage%: a/b * 100",
         "percentage"
     ],
-    "DFT.gml": [
-        "dft",
-        "dft" 
+    "euler.gml": [
+        "euler: cos(2pi*k*n/N) + i*sin(2pi*k**n/N)",
+        "cos() + i*sin()"
     ]
 }

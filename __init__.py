@@ -74,11 +74,15 @@ def matcher(bv: BinaryView, f_dfg, f, user_tag):
                 address = f.mlil.ssa_form[idx].address
                 print("address: ", hex(address))
                 add_model_tag_to_inst(bv, address, matched_model, user_tag)
-                # rename variables
-                # assume it is setSSAVar instruction
-                target_var = f.mlil.ssa_form[idx].dest.var
-                target_var.set_name_async(matched_inst_dest[1])
-                target_var.function.view.update_analysis()
+                '''
+                rename variable only if matched instruction is MediumLevelILSetVarSsa
+                e.g., called function is blackbox so we won't rename variable
+                '''
+                s = f.mlil.ssa_form[idx]
+                if isinstance(s, MediumLevelILSetVarSsa):
+                    target_var = s.dest.var
+                    target_var.set_name_async(matched_inst_dest[1])
+                    target_var.function.view.update_analysis()
 
 '''
 iterate all functions from binary and match models
