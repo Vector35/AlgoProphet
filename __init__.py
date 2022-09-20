@@ -5,7 +5,7 @@ from tracemalloc import start
 from binaryninja import *
 from binaryninja.binaryview import BinaryView
 from dataclasses import dataclass
-from . import dfg, graph_match, dfg_processor
+from . import dfg, graph_match, dfg_processor, model_browser
 import os, sys
 from typing import *
 
