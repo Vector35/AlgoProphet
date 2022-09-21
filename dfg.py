@@ -303,6 +303,7 @@ def inst_visit(ssa) -> None:
     global load_mode
     global current_data_width
     global current_load
+    print(f"{ssa.instr_index}: {parent_dict}")
     match type(ssa):
         # case bn.mediumlevelil.MediumLevelILRet:
         #     exit_nodes.append(str(ssa.src[0]))
@@ -370,7 +371,8 @@ def inst_visit(ssa) -> None:
             elif isinstance(rhs, MediumLevelILVarSsa):
                 ssa_var_read = ssa.vars_read
                 if len(ssa_var_read) == 1:
-                    update_dict(lvar, ssa_var_read[0].var)
+                    v = ssa_var_read[0]
+                    update_dict(lvar, v.name + "#" + str(v.version))
                 return
             elif isinstance(rhs, MediumLevelILAddressOf):
                 update_dict(rhs.vars_read[0].name, lvar)
