@@ -1,11 +1,17 @@
 # AlgoProphet
 Author: Rafael
 
-Work in progress :construction_worker_man:
+The purpose of this project is to identify various, unknown implementations of arithmetic algorithm from given binaries.
 
 ## Description
+To identify the different implementation of algorithm, AlgoProphet generates a High-level Data-flow graph as the model for the algorithm and uses it as the pattern to match the given target. To generate data-flow graph efficiently, AlgoProphet takes use of the MLIL SSA from on Binary Ninja. Following are some more efforts AlgoProphet contributes to work on different implementations:  
+* To make the matching algorithm order-independent, AlgoProphet normalizes the arithmetic operators e.g., `a - b`(subtraction) should be same as `a + (-1)*b`
+* Different from the source code level, they are more implementations based on memory operations. To solve this challenge on binary, AlgoProphet extracts the semantic of memory operations and merges the information into `load` operation so that matching algorithm won't be affected.  
+* etc.  
+
+
 Currently AlgoProphet provides three functionalities:  
-* Match functions with existing models
+* Match functions with existing models  
 * Build a model based on highlighted instructions
 * Adjust a model
 
@@ -62,6 +68,11 @@ From the screenshot, we can find that `ADD#0` has been removed from the model.
 After adjusting your model, remember to put it back to `models/` before `Match Algos`, also keep the information in `formula.json` and your model consistent.
 
 > Suggest to keep test folder clean after you move your own model
+
+## Limitations and Future work
+AlgoProphet is the prototype of the concept: using data-flow graph to identify different implementation of arithmetic algorithm. Currently, AlgoProphet requires human's effort to generate models manually on Binary View. However, based on the matching results of AlgoProphet, we are convinced that AlgoProphet can help people to identify algorithms from the binaries. What's more, in addition to the known arithmetic algorithm, AlgoProphet also allows users to define models for their own implemented algorithms! In next step, we are exploring the way to help users generate models automatically or human-in-the-loop by machine learning work(e.g., GNN based on our generated graph models).  
+
+In future work, AlgoProphet will not only focus on completeness of **intraprocedural** data flow analysis as near-term, but also extend the work to **interprocedural** data flow analysis as longer-term so that we can define the behaviors of callee(e.g., semantic summary extraction based on Infer).
 
 ## License
 This plugin is released under an [MIT license](./license).
