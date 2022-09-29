@@ -1,33 +1,40 @@
 # AlgoProphet
 Author: Rafael
 
-The purpose of this project is to identify various, unknown implementations of arithmetic algorithm from given binaries.
+The purpose of this project is to identify various, possibly unknown, implementations of known arithmetic algorithms within binaries.
 
 ## Description
-To identify the different implementation of algorithm, AlgoProphet generates a High-level Data-flow graph as the model for the algorithm and uses it as the pattern to match the given target. To generate data-flow graph efficiently, AlgoProphet takes use of the MLIL SSA from on Binary Ninja. Following are some more efforts AlgoProphet contributes to work on different implementations:  
-* To make the matching algorithm order-independent, AlgoProphet normalizes the arithmetic operators e.g., `a - b`(subtraction) should be same as `a + (-1)*b`
+AlgoProphet builds a model for a given algorithm by generating a high-level data-flow graph (DFG) from its binary code. It uses the DFG model as a pattern for matching against other binary code, in order to identify other, possibly distinct, implementations of the same algorithm. To generate DFGs efficiently, AlgoProphet makes use of the SSA form of Binary Ninja's Medium Level Intermediate Language (MLIL). AlgoProphet uses a number of techniques to improve matching against disparate code, including, among others:
+* To make the matching algorithm order-independent, AlgoProphet normalizes the arithmetic operators, e.g., `a - b` (subtraction) is replaced with the semantically equivalent `a + (-1 * b)`.
 * Different from the source code level, they are more implementations based on memory operations. To solve this challenge on binary, AlgoProphet extracts the semantic of memory operations and merges the information into `load` operation so that matching algorithm won't be affected.  
 * etc.  
 
 
-Currently AlgoProphet provides three functionalities:  
-* Match functions with existing models  
-* Build a model based on highlighted instructions
-* Adjust a model
+Currently AlgoProphet provides three functionalities through its Binary Ninja plugin:  
+* Model Matching: Match functions in a binary with existing algorithm models
+* Model Building: Build a model from instructions selected by the user
+* Model Adjustment: Adjust a model by removing irrelevant nodes from the DFG based on MLIL instruction operands selected by the user
 
-## Match functions with existing models
-In the `models/` of your plugin folder, you can find our existing models in gml format.  
+## Model Matching
+
+The AlgoProphet plugin's 'models/' folder contains the existing models in [GML format](https://en.wikipedia.org/wiki/Graph_Modelling_Language): 
+
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/existing-models.png" width=60% height=60%>
 
-To match current function with existing models, you can right click(at any places of the function) to get the plugin menu: `Plugins > AlgoProphet > Match Algos`.  
+To match current function with existing models, you can right click anywhere in the function to open the plugin menu, then select `Plugins > AlgoProphet > Match Algos`.
+
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/rk-match-models.png" width=60% height=60%>  
-What will happen next is that `tags` would be created. The content of tag would describe which model is likely to be found at the address. In the screenshot, AlgoProphet finds the summation of the array elements at the statement.  
+
+For each model that is matched, a tag will be created, indicating which model is likely to be found at the tagged address. In the screenshot, AlgoProphet finds a match for the "summation of array" model at the tagged MLIL instruction:
+
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/match-model-result.png" width=60% height=60%>  
-You can also find that the some variable name would be **renamed** to a *meaningful* one. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. With this work, user can identify that this variable might be used for the sum of the array.
 
-> If you want to ignore matched instructions in some functions, just add them to `ignore.txt`.
+AlgoProphet will also attempt to assign meaningful names to variables, according to matched algorithm. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. This helps the user to identify that this variable might be used for the sum of the array.
 
-## Build a model based on highlighted instructions
+> **Note:** Functions whose names appear in `ignore.txt` will not be considered for matching.
+
+## Model Building
+
 To build a model (customize the algorithm you want to find from other binaries), you can highlight multiple instructions which you think are important features for the algorithm, and right click to get the plugin menu: `Plugins > AlgoProphet > Build a model`.  
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/highlight-build-model.png" width=60% height=60%>  
 Next, you can find your generated model(`.gml` and visualized graph) in `test/` of plugin folder.  
@@ -50,7 +57,8 @@ Take `summation of array` model for example, the first element would be `summati
 * move the `.gml` file(only gml file!!) from `test/` to `models/`
 AlgoProphet will scan the existing models in `models/` to match algorithms.
 
-## Adjust a model
+## Model Adjustment
+
 It is hard to build model perfectly at the first time, so we build up an interactive window for users to decide what nodes they want to remove from their models.
 > here comes a hint for generating good model: keep it as simple as possible
 
