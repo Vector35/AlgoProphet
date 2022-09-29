@@ -33,4 +33,4 @@ class AlgoProphetSidebarWidgetType(SidebarWidgetType):
         # widget is visible and the BinaryView becomes active.
         return AlgoProphetSidebarWidget("AlgoProphet", frame, data)
 
-Sidebar.addSidebarWidgetType(AlgoProphetSidebarWidgetType())
+#Sidebar.addSidebarWidgetType(AlgoProphetSidebarWidgetType())
