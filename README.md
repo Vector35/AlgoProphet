@@ -29,7 +29,11 @@ For each model that is matched, a tag will be created, indicating which model is
 
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/match-model-result.png" width=60% height=60%>  
 
-AlgoProphet will also attempt to assign meaningful names to variables, according to matched algorithm. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. This helps the user to identify that this variable might be used for the sum of the array.
+AlgoProphet will also attempt to assign meaningful names to variables, according to matched algorithm. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. This helps the user to identify that this variable might be used for the sum of the array.  
+
+We also provide several binary samples of DFT (Discreate Fourier Transform) algorithm with different implementations on Github. Users can download the following samples to test how AlgoProphet identifies and locates DFT from the binaries.  
+* [DFT samples on amd64](https://github.com/Vector35/AlgoProphet/blob/main/samples/dft-amd64-linux-O1-test2.bndb)
+* [DFT samples on arm64](https://github.com/Vector35/AlgoProphet/blob/main/samples/dft-arm64-linux-O1-simple_names.bndb)
 
 > **Note:** Functions whose names appear in `ignore.txt` will not be considered for matching.
 
