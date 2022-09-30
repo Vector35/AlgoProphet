@@ -114,13 +114,17 @@ def update_dict(node, parent) -> None:
     if parent not in parent_dict[node]:
         parent_dict[node].append(parent)
 
-def get_top_parents(node, parents) -> list[str]:
+def get_top_parents(node, parents, visited) -> list[str]:
     if str(node) in nodes:
         parents.append(node)
+        visited.append(node)
     else:
+        if node in visited:
+            return parents
         if node in parent_dict:
+            visited.append(node)
             for p in parent_dict[node]:
-                parents = get_top_parents(p, parents)
+                parents = get_top_parents(p, parents, visited)
     return parents
 
 def add_node_with_attr(node1, node2) -> None:
@@ -170,7 +174,7 @@ def add_edge_node(node1, node2) -> None:
 
 def bridge_parent_to_arith(operand, arith) -> None:
     global graph
-    for parent in get_top_parents(operand, list()):
+    for parent in get_top_parents(operand, list(), list()):
         # add edges
         if graph.has_edge(parent, arith):
             w = graph[parent][arith]["weight"]
@@ -189,6 +193,8 @@ def function_handler(ssa, fname) -> None:
     global nodes
     global parent_dict
     if "sincos" in fname:
+        if len(ssa.params) == 0:
+            return
         # first parameter is parameter sin and cos
         param = ssa.params[0]
         fsin = get_next_func("sin")
@@ -197,7 +203,7 @@ def function_handler(ssa, fname) -> None:
         nodes.append(fcos)
         graph.add_node(fsin, type="operation", value="sin", idx=inst_idx)
         graph.add_node(fcos, type="operation", value="cos", idx=inst_idx)
-        for i in get_top_parents(str(param), list()):
+        for i in get_top_parents(str(param), list(), list()):
             add_edge_node(i, fsin)
             add_edge_node(i, fcos)
         sin_param = ssa.params[1]
@@ -247,14 +253,16 @@ def rhs_visit(expr) -> str:
     elif isinstance(expr, MediumLevelILImport):
         if load_mode == True:
             current_data_width = get_base_type(expr.expr_type)
-        return bv.get_data_var_at(expr.constant).name
+        var = bv.get_data_var_at(expr.constant)
+        return bv.get_data_var_at(expr.constant).name if var is not None else str(expr)
     elif isinstance(expr, MediumLevelILConstPtr):
         # e.g., a pointer targeting to global constant
         # constant pointer is also an instance of constant
         # so we should put before constant
         if load_mode == True:
             current_data_width = get_base_type(expr.expr_type)
-        return str(bv.get_data_var_at(expr.constant).value)
+        var = bv.get_data_var_at(expr.constant)
+        return str(var.value) if var is not None else str(expr)
     elif isinstance(expr, Constant):
         if str(expr) not in nodes:
             nodes.append(str(expr.constant))
@@ -309,9 +317,11 @@ def inst_visit(ssa) -> None:
         #     exit_nodes.append(str(ssa.src[0]))
         #     return
         case bn.mediumlevelil.MediumLevelILCallSsa:
-            func_addr = ssa.dest.constant
-            if bv.get_function_at(func_addr) != None:
-                f = bv.get_function_at(func_addr)
+            target = ssa.dest
+            func_addr = None
+            if hasattr(target, 'constant'):
+                func_addr = target.constant
+            if type(func_addr) is int and bv.is_valid_offset(func_addr) and (f := bv.get_function_at(func_addr)) != None:
                 func_name = f.name
                 ret_type = get_base_type(f.return_type)
                 f_name = get_next_func(func_name)
@@ -352,7 +362,7 @@ def inst_visit(ssa) -> None:
                 # the bytes each element takes for
                 operation = get_arithmetic("x.xxxx_load")
                 nodes.append(operation)
-                for node in get_top_parents(rhs_visit(rhs.src), list()):
+                for node in get_top_parents(rhs_visit(rhs.src), list(), list()):
                     # add nodes
                     add_node_with_attr(node, operation)
                     # add edges
@@ -585,7 +595,8 @@ def read_binaryview(binview, mlil_func, filter_dict):
         if len(shift_candidates) != 0:
             # heuristics
             shift_ = max(shift_candidates)
-            if (shift_ / graph.nodes[load_name]["base_width"] >= 1) and (shift_ % graph.nodes[load_name]["base_width"] == 0):
+            bw = graph.nodes[load_name]["base_width"]
+            if (shift_ / bw >= 1) and (shift_ / bw <= 100) and (shift_ % bw == 0):
                 graph.nodes[load_name]["shift_width"] = shift_
     
     # add attributes of output

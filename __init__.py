@@ -96,7 +96,7 @@ def function_iterator(bv: BinaryView):
     tag = bv.get_tag_type("AlgoProphet")
     get_ignore_list()
     for f in bv.functions:
-        if f.name in ignore_list:
+        if (f.name in ignore_list) or (not f.name[0].isalpha()):
             continue
         matcher(bv, dfg.read_binaryview(bv, f.mlil, []), f, tag)
         dfg.clean_data()
