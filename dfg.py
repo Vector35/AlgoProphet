@@ -1,5 +1,6 @@
 from ctypes import pointer
 from imp import is_frozen
+from typing import List, Set, Optional
 import os, sys
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -33,7 +34,7 @@ graph = nx.DiGraph()
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
-'''
+"""
 get base type width by pointer
 VoidTypeClass = 0
 BoolTypeClass = 1
@@ -48,7 +49,9 @@ x VarArgsTypeClass = 9
 x ValueTypeClass = 10
 NamedTypeReferenceClass = 11
 x WideCharTypeClass = 12
-'''
+"""
+
+
 def get_base_type(tg) -> int:
     match tg.type_class:
         case 0 | 1 | 2 | 3:
@@ -70,6 +73,7 @@ def get_base_type(tg) -> int:
             print("Currently don't handle with type: %d", tg.type_class)
             return 0
 
+
 # each operation should have unique name
 def get_next_opname(operation) -> str:
     global arnode
@@ -79,6 +83,7 @@ def get_next_opname(operation) -> str:
         arnode[operation] = 0
     return operation + "#" + str(arnode[operation])
 
+
 def get_next_func(fun) -> str:
     global funnode
     if fun in funnode:
@@ -86,6 +91,7 @@ def get_next_func(fun) -> str:
     else:
         funnode[fun] = 0
     return fun + "#" + str(funnode[fun])
+
 
 def get_arithmetic(operation) -> str:
     global graph
@@ -101,45 +107,66 @@ def get_arithmetic(operation) -> str:
         # add nodes and edges
         add_node_with_attr(opnode1, opnode2)
         add_edge_node(opnode1, opnode2)
-        add_node_with_attr(str(-1), opnode1) 
+        add_node_with_attr(str(-1), opnode1)
         add_edge_node(str(-1), opnode1)
         return opnode1 + "/" + opnode2
     else:
         return get_next_opname(op)
 
-def update_dict(node, parent) -> None:
+
+def update_dict(node, parent: str) -> None:
     global parent_dict
     if node not in parent_dict:
         parent_dict[node] = []
     if parent not in parent_dict[node]:
         parent_dict[node].append(parent)
 
-def get_top_parents(node, parents, visited) -> list[str]:
+
+def get_top_parents(
+    node,
+    parents: Optional[List[str]] = None,
+    visited: Optional[Set[str]] = None,
+) -> List[str]:
+    if parents is None:
+        parents = []
+    if visited is None:
+        visited = set()
     if str(node) in nodes:
         parents.append(node)
-        visited.append(node)
+        visited.add(node)
     else:
         if node in visited:
             return parents
         if node in parent_dict:
-            visited.append(node)
+            visited.add(node)
             for p in parent_dict[node]:
                 parents = get_top_parents(p, parents, visited)
     return parents
+
 
 def add_node_with_attr(node1, node2) -> None:
     global graph, input_vars, pointer_base, current_data_width
     # add two nodes to graph
     for node in [node1, node2]:
-        if '#' not in node:
+        if "#" not in node:
             graph.add_node(node, type="constant", value=node, idx=inst_idx)
         elif node in input_vars:
             graph.add_node(node, type="ssavar", value=node, idx=inst_idx)
         else:
             if "load" in node and node not in graph.nodes():
-                graph.add_node(node, type="operation", value=node.split('#')[0], idx=inst_idx, base=pointer_base, base_width=current_data_width)
+                graph.add_node(
+                    node,
+                    type="operation",
+                    value=node.split("#")[0],
+                    idx=inst_idx,
+                    base=pointer_base,
+                    base_width=current_data_width,
+                )
             else:
-                graph.add_node(node, type="operation", value=node.split('#')[0], idx=inst_idx)
+                graph.add_node(
+                    node, type="operation", value=node.split("#")[0], idx=inst_idx
+                )
+
 
 def add_edge_node(node1, node2) -> None:
     global graph
@@ -147,7 +174,7 @@ def add_edge_node(node1, node2) -> None:
         hash_node1 = node1.split("#")[0]
     else:
         hash_node1 = node1
-        
+
     if "#" in str(node2):
         hash_node2 = node2.split("#")[0]
     else:
@@ -157,7 +184,9 @@ def add_edge_node(node1, node2) -> None:
         # add nodes
         add_node_with_attr(node1, node2)
         # add edges
-        graph.add_edge(node1, node2, weight=1, idx=inst_idx, src_name=node1, dst_name=node2)
+        graph.add_edge(
+            node1, node2, weight=1, idx=inst_idx, src_name=node1, dst_name=node2
+        )
     else:
         # if the two are same operation nodes
         # merge node and sum up the weights on two edges
@@ -169,12 +198,20 @@ def add_edge_node(node1, node2) -> None:
                 # add nodes
                 add_node_with_attr(in_edge[0], node2)
                 # add edges
-                graph.add_edge(in_edge[0], node2, weight=graph[in_edge[0]][node1]["weight"], idx=inst_idx, src_name=in_edge[0], dst_name=node2)
+                graph.add_edge(
+                    in_edge[0],
+                    node2,
+                    weight=graph[in_edge[0]][node1]["weight"],
+                    idx=inst_idx,
+                    src_name=in_edge[0],
+                    dst_name=node2,
+                )
         graph.remove_node(node1)
+
 
 def bridge_parent_to_arith(operand, arith) -> None:
     global graph
-    for parent in get_top_parents(operand, list(), list()):
+    for parent in get_top_parents(operand):
         # add edges
         if graph.has_edge(parent, arith):
             w = graph[parent][arith]["weight"]
@@ -185,9 +222,12 @@ def bridge_parent_to_arith(operand, arith) -> None:
             # add edges
             add_edge_node(parent, arith)
 
-'''
+
+"""
 represent graph in diff ways based on function
-'''
+"""
+
+
 def function_handler(ssa, fname) -> None:
     global graph
     global nodes
@@ -216,6 +256,7 @@ def function_handler(ssa, fname) -> None:
             add_node_with_attr(str(param), fname)
             # add edges
             add_edge_node(str(param), fname)
+
 
 def rhs_visit(expr) -> str:
     global graph
@@ -267,7 +308,12 @@ def rhs_visit(expr) -> str:
         if str(expr) not in nodes:
             nodes.append(str(expr.constant))
         return str(expr.constant)
-    elif isinstance(expr, MediumLevelILIntToFloat) or isinstance(expr, MediumLevelILFloatToInt) or isinstance(expr, MediumLevelILBoolToInt) or isinstance(expr, MediumLevelILFloatConv):
+    elif (
+        isinstance(expr, MediumLevelILIntToFloat)
+        or isinstance(expr, MediumLevelILFloatToInt)
+        or isinstance(expr, MediumLevelILBoolToInt)
+        or isinstance(expr, MediumLevelILFloatConv)
+    ):
         return rhs_visit(expr.src)
     elif isinstance(expr, MediumLevelILLowPart):
         return rhs_visit(expr.src)
@@ -304,6 +350,7 @@ def rhs_visit(expr) -> str:
                 bridge_parent_to_arith(rhs_operand, arithmetic)
         return arithmetic
 
+
 def inst_visit(ssa) -> None:
     global graph
     global nodes
@@ -319,9 +366,13 @@ def inst_visit(ssa) -> None:
         case bn.mediumlevelil.MediumLevelILCallSsa:
             target = ssa.dest
             func_addr = None
-            if hasattr(target, 'constant'):
+            if hasattr(target, "constant"):
                 func_addr = target.constant
-            if type(func_addr) is int and bv.is_valid_offset(func_addr) and (f := bv.get_function_at(func_addr)) != None:
+            if (
+                type(func_addr) is int
+                and bv.is_valid_offset(func_addr)
+                and (f := bv.get_function_at(func_addr)) != None
+            ):
                 func_name = f.name
                 ret_type = get_base_type(f.return_type)
                 f_name = get_next_func(func_name)
@@ -337,13 +388,19 @@ def inst_visit(ssa) -> None:
             return
         case bn.mediumlevelil.MediumLevelILVarPhi:
             for s in ssa.src:
-                update_dict(ssa.dest.name + "#" + str(ssa.dest.version), s.name + "#" + str(s.version))
+                update_dict(
+                    ssa.dest.name + "#" + str(ssa.dest.version),
+                    s.name + "#" + str(s.version),
+                )
             return
         case bn.mediumlevelil.MediumLevelILIntrinsicSsa:
             # intrinsic
             for dest_var in ssa.vars_written:
                 for src_var in ssa.vars_read:
-                    update_dict(dest_var.name + "#" + str(dest_var.version), src_var.name + "#" + str(src_var.version))
+                    update_dict(
+                        dest_var.name + "#" + str(dest_var.version),
+                        src_var.name + "#" + str(src_var.version),
+                    )
             return
         case bn.mediumlevelil.MediumLevelILSetVarSsa:
             rhs = ssa.src
@@ -351,7 +408,7 @@ def inst_visit(ssa) -> None:
             lvar = lhs.name + "#" + str(lhs.version)
             # cases for rhs
             if isinstance(rhs, Constant):
-                #bn.mediumlevelil.MediumLevelILConst
+                # bn.mediumlevelil.MediumLevelILConst
                 if str(rhs) not in nodes:
                     nodes.append(str(rhs.constant))
                 update_dict(lvar, str(rhs.constant))
@@ -398,6 +455,7 @@ def inst_visit(ssa) -> None:
         case _:
             return
 
+
 # this works for single basic block
 def get_function(insts, start, end, r_vars, w_vars, loop_vars):
     global nodes, graph
@@ -413,9 +471,9 @@ def get_function(insts, start, end, r_vars, w_vars, loop_vars):
                 # if def after use, there should be a loop
                 if i in r_vars and i not in loop_vars:
                     loop_vars.append(i)
-        idx += 1 
+        idx += 1
     return r_vars, w_vars, loop_vars
-    
+
 
 # return list for each loops
 # each loop is a list of basic blocks
@@ -435,33 +493,38 @@ def calculate_natural_loops(func):
         for edge in bb.outgoing_edges:
             if edge.target in edge.source.dominators:
                 back_edges.append(edge)
-                #print('back edge %s -> %s' % (bbstr(edge.source), bbstr(edge.target)))
+                # print('back edge %s -> %s' % (bbstr(edge.source), bbstr(edge.target)))
 
     # reverse breadth-first search from footer to header, collecting all nodes
     for edge in back_edges:
         (header, footer) = (edge.target, edge.source)
-        #print('collecting blocks for loop fenced between %s and %s:' % (bbstr(header), bbstr(footer)))
+        # print('collecting blocks for loop fenced between %s and %s:' % (bbstr(header), bbstr(footer)))
         loop_blocks = set([header, footer])
         if header != footer:
             queue = [edge.source]
             while queue:
                 cur = queue.pop(0)
                 loop_blocks.add(cur)
-                new_batch = [e.source for e in cur.incoming_edges if (not e.source in loop_blocks)]
-                #print('incoming blocks to %s: %s' % (bbstr(cur), [bbstr(x) for x in new_batch]))
+                new_batch = [
+                    e.source
+                    for e in cur.incoming_edges
+                    if (not e.source in loop_blocks)
+                ]
+                # print('incoming blocks to %s: %s' % (bbstr(cur), [bbstr(x) for x in new_batch]))
                 queue.extend(new_batch)
-        #print(','.join([bbstr(n) for n in loop_blocks]))
+        # print(','.join([bbstr(n) for n in loop_blocks]))
 
         # store this loop
         loops.append(list(loop_blocks))
 
     return loops
 
+
 # use topo sorting to get the order of nodes in the CFG
 def topo_order(func):
     result = []
     result_dict = {}
-    iedges = [0]*len(func.basic_blocks)
+    iedges = [0] * len(func.basic_blocks)
     for b in func.basic_blocks:
         iedges[b.index] = len([e for e in b.incoming_edges if not e.back_edge])
     stack = [func.basic_blocks[0]]
@@ -474,6 +537,7 @@ def topo_order(func):
             if iedges[child.index] == 0:
                 stack.append(child)
     return result, result_dict
+
 
 def get_ancestors(n, visited):
     if n in visited:
@@ -488,6 +552,7 @@ def get_ancestors(n, visited):
         visited = get_ancestors(v, visited)
     return visited
 
+
 def add_out_to_nodes():
     global graph
     for node in graph.nodes():
@@ -496,6 +561,7 @@ def add_out_to_nodes():
             graph.nodes[node]["output"] = True
         else:
             graph.nodes[node]["output"] = False
+
 
 def clean_data():
     global graph, bb_dict, nodes, input_vars, inst_idx, parent_dict, pointer_base, current_load, current_data_width, funnode, arnode
@@ -514,21 +580,22 @@ def clean_data():
     current_data_width = 0
     inst_idx = -1
 
+
 def read_binaryview(binview, mlil_func, filter_dict):
     global graph, bv, bb_dict, nodes, input_vars, inst_idx
-    
+
     bv = binview
-    
+
     f = mlil_func.source_function
-    
+
     bb_order, bb_dict = topo_order(f.mlil.ssa_form)
-    
+
     # add parameters into nodes
     for param in f.parameter_vars.vars:
         nodes.append(param.name + "#0")
-    
+
     insts = f.mlil.ssa_form
-    
+
     loop_vars = list()
     # get loop vars
     for loop in calculate_natural_loops(insts):
@@ -537,17 +604,19 @@ def read_binaryview(binview, mlil_func, filter_dict):
             start_list[loop_block.start] = loop_block
         r_vars = list()
         w_vars = list()
-        
+
         for start, block in sorted(start_list.items()):
-            r_vars, w_vars, lv = get_function(insts, start, block.end, r_vars, w_vars, loop_vars)
+            r_vars, w_vars, lv = get_function(
+                insts, start, block.end, r_vars, w_vars, loop_vars
+            )
             for i in lv:
                 if i not in loop_vars:
                     loop_vars.append(i)
-    
+
     for loop_var in loop_vars:
         nodes.append(loop_var)
     input_vars = nodes.copy()
-    
+
     print("function: ", f.name)
     for bb_idx in bb_order:
         bb = bb_dict[bb_idx]
@@ -558,7 +627,7 @@ def read_binaryview(binview, mlil_func, filter_dict):
             # print(str(insts[idx]))
             inst_visit(insts[idx])
             idx += 1
-    
+
     # normalize the array index cases
     # heuristics:
     # sort the nodes which are used in load operation
@@ -570,12 +639,12 @@ def read_binaryview(binview, mlil_func, filter_dict):
             for e in graph.in_edges(n):
                 if e not in load_edges:
                     load_edges.append(e)
-    
+
     # remove load_edges from graph
     core = {}
     for e in load_edges:
         if e[0] not in core and "load" not in e[0]:
-            core[ e[0] ] = e[1]
+            core[e[0]] = e[1]
         graph.remove_edge(e[0], e[1])
     # remove connected components of cores
     for c in core:
@@ -596,19 +665,26 @@ def read_binaryview(binview, mlil_func, filter_dict):
             # heuristics
             shift_ = max(shift_candidates)
             bw = graph.nodes[load_name]["base_width"]
-            if (shift_ / bw >= 1) and (shift_ / bw <= 100) and (shift_ % bw == 0):
+            if (
+                (bw != 0)
+                and (shift_ / bw >= 1)
+                and (shift_ / bw <= 100)
+                and (shift_ % bw == 0)
+            ):
                 graph.nodes[load_name]["shift_width"] = shift_
-    
+
     # add attributes of output
     add_out_to_nodes()
-    
+
     if len(filter_dict) != 0:
         print("Received: ", filter_dict)
         # get the node with sepcified instruction index
         filtered_edges = list()
         for src, dest, data in graph.edges(data=True):
-            if (data["idx"] < filter_dict["instr_list"][0]) or (data["idx"] > filter_dict["instr_list"][-1]):
-                filtered_edges.append( (src, dest) )
+            if (data["idx"] < filter_dict["instr_list"][0]) or (
+                data["idx"] > filter_dict["instr_list"][-1]
+            ):
+                filtered_edges.append((src, dest))
         graph.remove_edges_from(filtered_edges)
         filtered_nodes = list()
         for node, data in graph.nodes(data=True):
@@ -620,7 +696,7 @@ def read_binaryview(binview, mlil_func, filter_dict):
         nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
         plt.clf()
         return graph
-        
-    #nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
-    
+
+    # nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
+
     return graph
