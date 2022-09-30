@@ -245,7 +245,7 @@ def function_handler(ssa, fname) -> None:
         nodes.append(fcos)
         graph.add_node(fsin, type="operation", value="sin", idx=inst_idx)
         graph.add_node(fcos, type="operation", value="cos", idx=inst_idx)
-        for i in get_top_parents(str(param), list(), list()):
+        for i in get_top_parents(str(param)):
             add_edge_node(i, fsin)
             add_edge_node(i, fcos)
         sin_param = ssa.params[1]
@@ -421,7 +421,7 @@ def inst_visit(ssa) -> None:
                 # the bytes each element takes for
                 operation = get_arithmetic("x.xxxx_load")
                 nodes.append(operation)
-                for node in get_top_parents(rhs_visit(rhs.src), list(), list()):
+                for node in get_top_parents(rhs_visit(rhs.src)):
                     # add nodes
                     add_node_with_attr(node, operation)
                     # add edges
