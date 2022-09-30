@@ -652,7 +652,7 @@ def read_binaryview(binview, mlil_func, filter_dict):
     for c in core:
         load_name = core[c]
         if graph.nodes[load_name]["base_width"] == 0:
-            print(f"[Exception] {f.name} has load operation with 0 base_width!")
+            log_warn(f"[Exception] {f.name} has load operation with 0 base_width!")
             continue
         shift_candidates = list()
         undirected_graph = graph.copy().to_undirected()

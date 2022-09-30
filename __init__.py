@@ -39,7 +39,7 @@ def print(*args, **kwargs):
             caller = ''
         import builtins
         builtins.print(*args, **kwargs)
-        log_info(caller + f.getvalue())
+        log_debug(caller + f.getvalue())
 
 from cgi import test
 from lib2to3.pgen2 import token
