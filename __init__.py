@@ -1,8 +1,50 @@
+from traceback import format_exc
+
+from binaryninja import *
+
+try:
+    import binaryninja
+    import sys
+
+    __module__ = sys.modules[__name__]
+
+    __logger = binaryninja.Logger(0, __module__.__name__)
+
+    log = __logger.log
+    log_debug = __logger.log_debug
+    log_info = __logger.log_info
+    log_warn = __logger.log_warn
+    log_error = __logger.log_error
+    log_alert = __logger.log_alert
+
+    log_info(f'Loaded {__module__}')
+except:
+    log_warn(format_exc())
+    from binaryninja.log import log
+    from binaryninja import log_debug, log_info, log_warn, log_error, log_alert
+    log = log_info
+
+def print(*args, **kwargs):
+    import io
+    with io.StringIO() as f:
+        kwargs['file'] = f
+        import inspect
+        frame = inspect.stack()[1]
+        if frame.function:
+            if frame.lineno:
+                caller = f'[{frame.function}:{frame.lineno}]: '
+            else:
+                caller = f'[{frame.function}]: '
+        else:
+            caller = ''
+        import builtins
+        builtins.print(*args, **kwargs)
+        log_info(caller + f.getvalue())
+
 from cgi import test
 from lib2to3.pgen2 import token
 from select import select
 from tracemalloc import start
-from binaryninja import *
 from binaryninja.binaryview import BinaryView
 from dataclasses import dataclass
 from . import dfg, graph_match, dfg_processor, model_browser
@@ -12,6 +54,7 @@ from typing import *
 from binaryninja.interaction import MultilineTextField, TextLineField
 from binaryninjaui import UIActionHandler, UIAction, UIActionContext, UIContext
 from PySide6.QtWidgets import QWidget
+
 
 ignore_list = list()
 inst_tag_list = dict()

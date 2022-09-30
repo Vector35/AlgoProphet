@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import binaryninja as bn
 from binaryninja import *
 
+from . import print, log, log_debug, log_info, log_warn, log_error, log_alert
+
 # current instruction index in function
 inst_idx = -1
 arnode = {}
@@ -617,7 +619,7 @@ def read_binaryview(binview, mlil_func, filter_dict):
         nodes.append(loop_var)
     input_vars = nodes.copy()
 
-    print("function: ", f.name)
+    print(f"function (0x{f.start:x}): {f.name} ({str(f)})")
     for bb_idx in bb_order:
         bb = bb_dict[bb_idx]
         idx = bb.start
@@ -650,7 +652,7 @@ def read_binaryview(binview, mlil_func, filter_dict):
     for c in core:
         load_name = core[c]
         if graph.nodes[load_name]["base_width"] == 0:
-            print("[Exception] %s has load operation with 0 base_width!", f.name)
+            print(f"[Exception] {f.name} has load operation with 0 base_width!")
             continue
         shift_candidates = list()
         undirected_graph = graph.copy().to_undirected()
