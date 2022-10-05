@@ -1,8 +1,10 @@
-import os, sys
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+
+from . import print, log, log_debug, log_info, log_warn, log_error, log_alert
 
 def adjust_dfg(func_name, dfgraph, filter_dict):
     remove_node_list = list()
@@ -30,7 +32,7 @@ def read_dfg_with_fdict(func_name, filter_dict):
     gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
     png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
     if os.path.exists(gml_name) == False:
-        print("Model not exists, please check test folder")
+        log_warn("Model not exists, please check test folder")
         return
     dfgraph = nx.read_gml(gml_name)
     # delete file after read
@@ -52,17 +54,17 @@ def rk_read_dfg(func_name, label, rm_op):
     gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
     png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
     if os.path.exists(gml_name) == False:
-        print("Model not exists, please check test folder")
+        log_warn("Model not exists, please check test folder")
         return
     dfgraph = nx.read_gml(gml_name)
     if not dfgraph.has_node(label):
-        print(f"Cannot find node {label}")
+        log_warn(f"Cannot find node {label}")
         return
     if rm_op == True:
         # this is used for removing operation nodes
         closest_op = rk_get_op(dfgraph, label)
         if closest_op == None:
-            print(f"Cannot find related operation nodes for {label}")
+            log_warn(f"Cannot find related operation nodes for {label}")
             return
         label = closest_op
     # remove nodes from graph

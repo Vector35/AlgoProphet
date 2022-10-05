@@ -1,19 +1,19 @@
-from ctypes import pointer
-from imp import is_frozen
+from collections import defaultdict
 from typing import List, Set, Optional
-import os, sys
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
 
 import binaryninja as bn
 from binaryninja import *
+from binaryninja.enums import TypeClass as TC
 
 from . import print, log, log_debug, log_info, log_warn, log_error, log_alert
 
 # current instruction index in function
 inst_idx = -1
-arnode = {}
-funnode = {}
+arnode = defaultdict(int)
+funnode = defaultdict(int)
 nodes = []
 # input_vars are used to save ssavar we want to show in graph
 input_vars = []
@@ -22,7 +22,7 @@ load_mode = False
 current_data_width = 0
 pointer_base = ""
 current_load = ""
-parent_dict = {}
+parent_dict = defaultdict(list)
 
 opmap = {
     "SUB": "ADD",
@@ -56,47 +56,38 @@ x WideCharTypeClass = 12
 
 def get_base_type(tg) -> int:
     match tg.type_class:
-        case 0 | 1 | 2 | 3:
+        case TC.VoidTypeClass | TC.BoolTypeClass | TC.IntegerTypeClass | TC.FloatTypeClass:
             return tg.width
-        case 4:
+        case TC.StructureTypeClass:
             print("Pointer -> struct")
             return tg.width
-        case 5:
+        case TC.EnumerationTypeClass:
             print("Pointer -> enum")
             return tg.width
-        case 6:
+        case TC.PointerTypeClass:
             return get_base_type(tg.target)
-        case 7:
+        case TC.ArrayTypeClass:
             return get_base_type(tg.element_type)
-        case 11:
+        case TC.NamedTypeReferenceClass:
             print("Pointer -> NamedTypeReferenceClass")
             return tg.width
         case _:
-            print("Currently don't handle with type: %d", tg.type_class)
+            print(f"Currently don't handle with type: {tg.type_class.name}")
             return 0
 
 
 # each operation should have unique name
 def get_next_opname(operation) -> str:
-    global arnode
-    if operation in arnode:
-        arnode[operation] += 1
-    else:
-        arnode[operation] = 0
-    return operation + "#" + str(arnode[operation])
+    arnode[operation] += 1
+    return f'{operation}#{arnode[operation] - 1}'
 
 
 def get_next_func(fun) -> str:
-    global funnode
-    if fun in funnode:
-        funnode[fun] += 1
-    else:
-        funnode[fun] = 0
-    return fun + "#" + str(funnode[fun])
+    funnode[fun] += 1
+    return f'{fun}#{funnode[fun] - 1}'
 
 
 def get_arithmetic(operation) -> str:
-    global graph
     op = str(operation).split(".")[1][5:]
     if op in opmap.keys():
         if str(-1) not in nodes:
@@ -117,9 +108,6 @@ def get_arithmetic(operation) -> str:
 
 
 def update_dict(node, parent: str) -> None:
-    global parent_dict
-    if node not in parent_dict:
-        parent_dict[node] = []
     if parent not in parent_dict[node]:
         parent_dict[node].append(parent)
 
@@ -147,7 +135,6 @@ def get_top_parents(
 
 
 def add_node_with_attr(node1, node2) -> None:
-    global graph, input_vars, pointer_base, current_data_width
     # add two nodes to graph
     for node in [node1, node2]:
         if "#" not in node:
@@ -231,9 +218,6 @@ represent graph in diff ways based on function
 
 
 def function_handler(ssa, fname) -> None:
-    global graph
-    global nodes
-    global parent_dict
     if "sincos" in fname:
         if len(ssa.params) == 0:
             return
@@ -261,13 +245,10 @@ def function_handler(ssa, fname) -> None:
 
 
 def rhs_visit(expr) -> str:
-    global graph
-    global nodes
-    global parent_dict
     global load_mode
-    global pointer_base
     global current_load
     global current_data_width
+    global pointer_base
     if isinstance(expr, SSAVariable):
         return expr.name
     elif isinstance(expr, MediumLevelILVarSsa):
@@ -460,7 +441,6 @@ def inst_visit(ssa) -> None:
 
 # this works for single basic block
 def get_function(insts, start, end, r_vars, w_vars, loop_vars):
-    global nodes, graph
     # first, find out the input vars for the basic block
     idx = start
     while idx < end:

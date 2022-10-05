@@ -3,8 +3,9 @@ from traceback import format_exc
 from binaryninja import *
 
 try:
-    import binaryninja
     import sys
+
+    import binaryninja
 
     __module__ = sys.modules[__name__]
 
@@ -17,15 +18,26 @@ try:
     log_error = __logger.log_error
     log_alert = __logger.log_alert
 
-    log_info(f'Loaded {__module__}')
+    log_debug(f'Loaded {__module__}')
 except:
     log_warn(format_exc())
-    from binaryninja.log import log
-    from binaryninja import log_debug, log_info, log_warn, log_error, log_alert
+    from binaryninja import log_alert, log_debug, log_error, log_info, log_warn
     log = log_info
 
 def print(*args, **kwargs):
     import io
+    log_levels = {
+        'alert': log_alert,
+        'debug': log_debug,
+        'error': log_error,
+        'info': log_info,
+        'warn': log_warn
+    }
+    if args and args[0] in log_levels:
+        logger = log_levels[args[0]]
+        args = args[1:]
+    else:
+        logger = log_debug
     with io.StringIO() as f:
         kwargs['file'] = f
         import inspect
@@ -39,22 +51,19 @@ def print(*args, **kwargs):
             caller = ''
         import builtins
         builtins.print(*args, **kwargs)
-        log_debug(caller + f.getvalue())
+        logger(caller + f.getvalue())
 
-from cgi import test
-from lib2to3.pgen2 import token
-from select import select
-from tracemalloc import start
-from binaryninja.binaryview import BinaryView
+import os
+import sys
 from dataclasses import dataclass
-from . import dfg, graph_match, dfg_processor, model_browser
-import os, sys
 from typing import *
 
+from binaryninja.binaryview import BinaryView
 from binaryninja.interaction import MultilineTextField, TextLineField
-from binaryninjaui import UIActionHandler, UIAction, UIActionContext, UIContext
+from binaryninjaui import UIAction, UIActionContext, UIActionHandler, UIContext
 from PySide6.QtWidgets import QWidget
 
+from . import dfg, dfg_processor, graph_match, model_browser
 
 ignore_list = list()
 inst_tag_list = dict()
@@ -112,7 +121,7 @@ def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
 def matcher(bv: BinaryView, f_dfg, f, user_tag):
     for matched_model, matched_inst_dest in graph_match.match(f_dfg).items():
         if len(matched_inst_dest) != 0:
-            print("AlgoProphet: Find ", matched_model, " in ", f.name)
+            print('info', "AlgoProphet: Find ", matched_model, " in ", f.name)
             for idx in matched_inst_dest[0]:
                 address = f.mlil.ssa_form[idx].address
                 print("address: ", hex(address))
@@ -146,7 +155,7 @@ def function_iterator(bv: BinaryView):
                 
 def match_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        print("click the binary view!!")
+        log_warn("click the binary view!!")
         return
     function_iterator(ctx.binaryView)
     
@@ -163,7 +172,7 @@ def rk_match_helper(bv: BinaryView, func: Function):
 
 def adjust_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        print("click the binary view!!")
+        log_warn("click the binary view!!")
         return
     bv = ctx.binaryView
     func_name = TextLineField("Specify the function name")
@@ -308,11 +317,11 @@ def selection_helper(bv: BinaryView, start: int, end: int) -> None:
         dfg.read_binaryview(bv, ms.function, filter_dict)
         dfg.clean_data()
     except:
-        traceback.print_exc()
+        log_error(traceback.format_exc())
     
 def build_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        print("click the binary view!!")
+        log_warn("click the binary view!!")
         return
     selection_helper(ctx.binaryView, ctx.address, ctx.address + ctx.length)
     

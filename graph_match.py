@@ -1,4 +1,3 @@
-from curses import has_key
 import os, json
 import networkx as nx
 from networkx.algorithms import isomorphism
