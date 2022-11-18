@@ -2,13 +2,19 @@ from collections import defaultdict
 from typing import List, Set, Optional
 import os
 import networkx as nx
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
 
 import binaryninja as bn
 from binaryninja import *
 from binaryninja.enums import TypeClass as TC
 
-from . import print, log, log_debug, log_info, log_warn, log_error, log_alert
+from . import print, log_warn
+
+# TODO: get rid of all these globals and use a class
 
 # current instruction index in function
 inst_idx = -1
@@ -23,6 +29,7 @@ current_data_width = 0
 pointer_base = ""
 current_load = ""
 parent_dict = defaultdict(list)
+bv: BinaryView = None
 
 opmap = {
     "SUB": "ADD",
@@ -249,10 +256,11 @@ def rhs_visit(expr) -> str:
     global current_load
     global current_data_width
     global pointer_base
+    global bv
     if isinstance(expr, SSAVariable):
         return expr.name
     elif isinstance(expr, MediumLevelILVarSsa):
-        if load_mode == True:
+        if load_mode is True:
             if isinstance(expr.expr_type, PointerType):
                 # this is the pointer
                 pointer_base = str(expr)
@@ -275,7 +283,7 @@ def rhs_visit(expr) -> str:
         load_mode = False
         return operation
     elif isinstance(expr, MediumLevelILImport):
-        if load_mode == True:
+        if load_mode is True:
             current_data_width = get_base_type(expr.expr_type)
         var = bv.get_data_var_at(expr.constant)
         return bv.get_data_var_at(expr.constant).name if var is not None else str(expr)
@@ -283,7 +291,7 @@ def rhs_visit(expr) -> str:
         # e.g., a pointer targeting to global constant
         # constant pointer is also an instance of constant
         # so we should put before constant
-        if load_mode == True:
+        if load_mode is True:
             current_data_width = get_base_type(expr.expr_type)
         var = bv.get_data_var_at(expr.constant)
         return str(var.value) if var is not None else str(expr)
@@ -341,6 +349,7 @@ def inst_visit(ssa) -> None:
     global load_mode
     global current_data_width
     global current_load
+    global bv  # TODO: check this is the right bv!
     print(f"{ssa.instr_index}: {parent_dict}")
     match type(ssa):
         # case bn.mediumlevelil.MediumLevelILRet:
@@ -354,7 +363,7 @@ def inst_visit(ssa) -> None:
             if (
                 type(func_addr) is int
                 and bv.is_valid_offset(func_addr)
-                and (f := bv.get_function_at(func_addr)) != None
+                and (f := bv.get_function_at(func_addr)) is not None
             ):
                 func_name = f.name
                 ret_type = get_base_type(f.return_type)
@@ -490,7 +499,7 @@ def calculate_natural_loops(func):
                 new_batch = [
                     e.source
                     for e in cur.incoming_edges
-                    if (not e.source in loop_blocks)
+                    if (e.source not in loop_blocks)
                 ]
                 # print('incoming blocks to %s: %s' % (bbstr(cur), [bbstr(x) for x in new_batch]))
                 queue.extend(new_batch)
@@ -674,9 +683,11 @@ def read_binaryview(binview, mlil_func, filter_dict):
                 filtered_nodes.append(node)
         graph.remove_nodes_from(filtered_nodes)
         nx.draw(graph, with_labels=True)
-        plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
+        if plt is not None:
+            plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
         nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
-        plt.clf()
+        if plt is not None:
+            plt.clf()
         return graph
 
     # nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
