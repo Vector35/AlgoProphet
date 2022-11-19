@@ -1,4 +1,5 @@
-import os, json
+import os
+import json
 import networkx as nx
 from networkx.algorithms import isomorphism
 
@@ -41,6 +42,8 @@ def node_match(n1, n2):
                 return False
         else:
             # constant
+            # TODO: implement fuzzy matching for floating point values
+            # TODO: implement evaluation for python expressions (and math.* constants)
             if n1["value"] == n2["value"]:
                 return True
             else:
@@ -51,14 +54,15 @@ def node_match(n1, n2):
         return False
 
 
-def match(target):
+def match(target: nx.DiGraph):
     formula = dict()
     with open(os.path.join(PLUGINDIR_PATH, "formula.json")) as f:
         formula = json.load(f)
 
     models = dict()
     for model_gml in os.listdir(os.path.join(PLUGINDIR_PATH, "models")):
-        if model_gml.split(".")[-1] == "gml":
+        # if model_gml.split(".")[-1] == "gml":
+        if os.path.splitext(model_gml)[-1] == ".gml":
             models[formula[model_gml][0]] = list()
             models[formula[model_gml][0]].append(
                 nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml))
@@ -69,15 +73,14 @@ def match(target):
 
     for model_name, model in models.items():
         # graph matcher
-        gm = isomorphism.DiGraphMatcher(target, model[0], node_match=node_match)
-        if gm.subgraph_is_isomorphic() == True:
-            for matched_list in list(gm.subgraph_isomorphisms_iter()):
-                sg = list()
-                for node in matched_list:
-                    sg.append(node)
-                graph_ = target.copy().subgraph(sg)
-                inst_list = list()
-                for src, dst, data in graph_.edges(data=True):
+        gm: isomorphism.DiGraphMatcher = isomorphism.DiGraphMatcher(target, model[0], node_match=node_match)
+        if gm.subgraph_is_isomorphic():
+            for matched_list in gm.subgraph_isomorphisms_iter():
+                target_copy: nx.DiGraph = target.copy()
+                graph_: nx.DiGraph = target_copy.subgraph(sorted(list(matched_list.keys())))
+                inst_list = []
+                edge_view: nx.reportviews.OutEdgeView = graph_.edges(data=True)
+                for src, dst, data in edge_view:
                     if "idx" in data and data["idx"] not in inst_list:
                         if data["idx"] not in inst_list:
                             inst_list.append(data["idx"])

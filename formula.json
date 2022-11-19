@@ -60,7 +60,7 @@
         "percentage"
     ],
     "euler.gml": [
-        "euler: cos(2pi*k*n/N) + i*sin(2pi*k**n/N)",
-        "cos() + i*sin()"
+        "euler: cos(x) + i*sin(x)",
+        "euler_cos_plus_i_sin"
     ]
 }

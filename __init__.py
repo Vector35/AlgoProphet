@@ -1,10 +1,41 @@
 from traceback import format_exc
 
-from binaryninja import *
+from typing import List, Union
+
+import os
+import sys
+import traceback
+from dataclasses import dataclass
+
+import networkx as nx
+
+from binaryninjaui import (
+    UIAction,
+    UIActionContext,
+    UIActionHandler,
+    UIContext,
+)
+# from PySide6.QtWidgets import QWidget
+
+from binaryninja.enums import (
+    FunctionGraphType,
+)
+
+from binaryninja import (
+    BinaryView,
+    MultilineTextField,
+    TextLineField,
+    Function,
+    MediumLevelILFunction,
+    MediumLevelILInstruction,
+    MediumLevelILBasicBlock,
+    MediumLevelILSetVarSsa,
+    PluginCommand,
+    TagType,
+    get_form_input,
+)
 
 try:
-    import sys
-
     import binaryninja
 
     __module__ = sys.modules[__name__]
@@ -23,6 +54,7 @@ except:
     log_warn(format_exc())
     from binaryninja import log_alert, log_debug, log_error, log_info, log_warn
     log = log_info
+
 
 def print(*args, **kwargs):
     import io
@@ -53,62 +85,62 @@ def print(*args, **kwargs):
         builtins.print(*args, **kwargs)
         logger(caller + f.getvalue())
 
-import os
-import sys
-from dataclasses import dataclass
-from typing import *
-
-from binaryninja.binaryview import BinaryView
-from binaryninja.interaction import MultilineTextField, TextLineField
-from binaryninjaui import UIAction, UIActionContext, UIActionHandler, UIContext
-from PySide6.QtWidgets import QWidget
-
-from . import dfg, dfg_processor, graph_match, model_browser
+from . import (
+    dfg,
+    dfg_processor,
+    graph_match,
+    # model_browser,
+)
 
 ignore_list = list()
 inst_tag_list = dict()
 
 PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
+
 @dataclass
 class SelectionState:
     function: MediumLevelILFunction
     blocks: list
     instructions: list
-   
+
+
 Subject = Union[
     Function, MediumLevelILFunction, MediumLevelILInstruction, MediumLevelILBasicBlock
 ]
 
-'''
-ignore function included in the list
-'''
+
 def get_ignore_list():
+    '''
+    ignore function included in the list
+    '''
     global ignore_list
     with open(os.path.join(PLUGINDIR_PATH, "ignore.txt")) as f:
         lines = f.readlines()
-        for l in lines:
-            e = l.strip()
+        for line in lines:
+            e = line.strip()
             if e not in ignore_list:
                 ignore_list.append(e)
     f.close()
 
-'''
-load previous tag list from bndb
-'''
+
 def load_inst_tag_list(bv: BinaryView, addr):
+    '''
+    load previous tag list from bndb
+    '''
     global inst_tag_list
-    l = bv.get_user_data_tags_at(addr)
-    if len(l) != 0:
+    tags = bv.get_user_data_tags_at(addr)
+    if len(tags) != 0:
         if addr not in inst_tag_list:
             inst_tag_list[addr] = list()
-        for i in range(len(l)):
-            inst_tag_list[addr].append(l[i].data)
+        for i in range(len(tags)):
+            inst_tag_list[addr].append(tags[i].data)
 
-'''
-add tag to instruction if model still not identified
-'''
+
 def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
+    '''
+    add tag to instruction if model still not identified
+    '''
     global inst_tag_list
     load_inst_tag_list(bv, addr)
     if addr not in inst_tag_list:
@@ -118,7 +150,8 @@ def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
     inst_tag_list[addr].append(model)
     bv.create_user_data_tag(addr, user_tag, f'{model}')
 
-def matcher(bv: BinaryView, f_dfg, f, user_tag):
+
+def matcher(bv: BinaryView, f_dfg: nx.DiGraph, f: Function, user_tag: TagType):
     for matched_model, matched_inst_dest in graph_match.match(f_dfg).items():
         if len(matched_inst_dest) != 0:
             print('info', "AlgoProphet: Find ", matched_model, " in ", f.name)
@@ -136,39 +169,43 @@ def matcher(bv: BinaryView, f_dfg, f, user_tag):
                     target_var.set_name_async(matched_inst_dest[1])
                     target_var.function.view.update_analysis()
 
-'''
-iterate all functions from binary and match models
-'''
+
 def function_iterator(bv: BinaryView):
+    '''
+    iterate all functions from binary and match models
+    '''
     # dfg for all functions in current binary
     print(bv)
     # create user tag if not exist
-    if bv.get_tag_type("AlgoProphet") == None:
+    if bv.get_tag_type("AlgoProphet") is None:
         bv.create_tag_type("AlgoProphet", chr(0x2140))
     tag = bv.get_tag_type("AlgoProphet")
     get_ignore_list()
     for f in bv.functions:
         if (f.name in ignore_list) or (not f.name[0].isalpha()):
             continue
-        matcher(bv, dfg.read_binaryview(bv, f.mlil, []), f, tag)
+        matcher(bv, dfg.read_binaryview(bv, f.mlil), f, tag)
         dfg.clean_data()
-                
+
+
 def match_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
         log_warn("click the binary view!!")
         return
     function_iterator(ctx.binaryView)
-    
+
+
 def rk_match_helper(bv: BinaryView, func: Function):
     # create user tag if not exist
-    if bv.get_tag_type("AlgoProphet") == None:
+    if bv.get_tag_type("AlgoProphet") is None:
         bv.create_tag_type("AlgoProphet", chr(0x2140))
     tag = bv.get_tag_type("AlgoProphet")
     get_ignore_list()
     if func.name in ignore_list:
         return
-    matcher(bv, dfg.read_binaryview(bv, func.mlil, []), func, tag)
+    matcher(bv, dfg.read_binaryview(bv, func.mlil), func, tag)
     dfg.clean_data()
+
 
 def adjust_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
@@ -196,33 +233,36 @@ def adjust_helper(ctx: UIActionContext):
         if len(i) != 0:
             filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg_with_fdict(f.name, filter_dict)
-    
+
+
 def rk_adjust_helper(bv: BinaryView, func: Function):
     uc = UIContext.activeContext()
-    cv = uc.getCurrentView()
-    hts = cv.getHighlightTokenState()
+    # cv = uc.getCurrentView()
+    # hts = cv.getHighlightTokenState()
     ah = uc.getCurrentActionHandler()
     ctx = ah.actionContext()
-    
+
     h = ctx.token
     f = ctx.function.name
     token_name = h.token.text
-    token_type = h.token.type
+    # token_type = h.token.type
     dfg_processor.rk_read_dfg(f, token_name, False)
+
 
 def rkop_adjust_helper(bv: BinaryView, instr: MediumLevelILInstruction):
     uc = UIContext.activeContext()
-    cv = uc.getCurrentView()
-    hts = cv.getHighlightTokenState()
+    # cv = uc.getCurrentView()
+    # hts = cv.getHighlightTokenState()
     ah = uc.getCurrentActionHandler()
     ctx = ah.actionContext()
-    
+
     h = ctx.token
     f = ctx.function.name
     token_name = h.token.text
-    token_var = h.localVar
+    # token_var = h.localVar
     dfg_processor.rk_read_dfg(f, token_name, True)
-    
+
+
 def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
     function = block = instruction = None
     blocks = list()
@@ -275,6 +315,7 @@ def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
         instructions,
     )
 
+
 def selection_helper(bv: BinaryView, start: int, end: int) -> None:
     try:
         funcs = list()
@@ -313,21 +354,24 @@ def selection_helper(bv: BinaryView, start: int, end: int) -> None:
         filter_dict["instr_list"] = list()
         mlil_idx = [i.instr_index for i in ms.instructions]
         filter_dict["instr_list"].extend(mlil_idx)
-        
+
         dfg.read_binaryview(bv, ms.function, filter_dict)
         dfg.clean_data()
     except:
         log_error(traceback.format_exc())
-    
+
+
 def build_helper(ctx: UIActionContext):
     if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
         log_warn("click the binary view!!")
         return
     selection_helper(ctx.binaryView, ctx.address, ctx.address + ctx.length)
-    
+
+
 def rk_build_helper(bv, start, length):
     selection_helper(bv, start, start + length)
-                
+
+
 UIAction.registerAction("AlgoProphet - Match Algos")
 UIAction.registerAction("AlgoProphet - Adjust Tested models")
 UIAction.registerAction("AlgoProphet - Build a model")
