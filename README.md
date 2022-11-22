@@ -5,19 +5,19 @@ The purpose of this project is to identify various, possibly unknown, implementa
 
 ## Description
 AlgoProphet builds a model for a given algorithm by generating a high-level data-flow graph (DFG) from its binary code. It uses the DFG model as a pattern for matching against other binary code, in order to identify other, possibly distinct, implementations of the same algorithm. To generate DFGs efficiently, AlgoProphet makes use of the SSA form of Binary Ninja's Medium Level Intermediate Language (MLIL). AlgoProphet uses a number of techniques to improve matching against disparate code, including, among others:
-* To make the matching algorithm order-independent, AlgoProphet normalizes the arithmetic operators, e.g., `a - b` (subtraction) is replaced with the semantically equivalent `a + (-1 * b)`.
-* Different from the source code level, they are more implementations based on memory operations. To solve this challenge on binary, AlgoProphet extracts the semantic of memory operations and merges the information into `load` operation so that matching algorithm won't be affected.  
-* etc.  
+
+* Arithmetic Normalization: To make the matching algorithm order-independent, AlgoProphet normalizes arithmetic operations. For example, `a - b` (subtraction) is replaced with the semantically equivalent `a + (-1 * b)`.
+* Memory Abstraction: Because the specifics of memory usage can vary widely across implementations of an algorithm and architectures, AlgoProphet abstracts the semantics of memory operations and merges them into a load operation to simplify algorithm matching.  
 
 
-Currently AlgoProphet provides three functionalities through its Binary Ninja plugin:  
-* Model Matching: Match functions in a binary with existing algorithm models
-* Model Building: Build a model from instructions selected by the user
-* Model Adjustment: Adjust a model by removing irrelevant nodes from the DFG based on MLIL instruction operands selected by the user
+Currently AlgoProphet provides three functionalities through its Binary Ninja plugin:
+* Model Matching: Match functions in a binary with existing algorithm models.
+* Model Building: Build a model from instructions selected by the user.
+* Model Adjustment: Adjust a model by removing irrelevant nodes from the DFG model based on MLIL instruction operands selected by the user.
 
 ## Model Matching
 
-The AlgoProphet plugin's 'models/' folder contains the existing models in [GML format](https://en.wikipedia.org/wiki/Graph_Modelling_Language): 
+The AlgoProphet plugin's `models/` folder contains the existing models in [GML format](https://en.wikipedia.org/wiki/Graph_Modelling_Language): 
 
 <img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/existing-models.png" width=60% height=60%>
 
@@ -39,15 +39,19 @@ We also provide several binary samples of DFT (Discreate Fourier Transform) algo
 
 ## Model Building
 
-To build a model (customize the algorithm you want to find from other binaries), you can highlight multiple instructions which you think are important features for the algorithm, and right click to get the plugin menu: `Plugins > AlgoProphet > Build a model`.  
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/highlight-build-model.png" width=60% height=60%>  
-Next, you can find your generated model(`.gml` and visualized graph) in `test/` of plugin folder.  
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/generated-model.png" width=60% height=60%>  
-In the screenshot, generated model is `sum_with_idx.gml` and `sum_with_idx.png` as the visualized result.  
+It is possible to expand the algorithms that AlgoProphet can recognize by adding custom models. While it is possible to construct new model GML files by hand, the easiest way to add a model is with the plugin itself. Begin by selecting multiple instructions which you think are important features for the algorithm, and right click to get the plugin menu: `Plugins > AlgoProphet > Build a model`.  
 
-After making sure that it is the model you want to use  
-Two more steps:  
-* Add formula of algorithm into `formula.json`.  
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/highlight-build-model.png" width=60% height=60%>  
+
+You can then find your generated model(`.gml` and visualized graph) in the `test/` subfolder of the plugin folder, named from the function containing the selected instructions:
+
+<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/generated-model.png" width=60% height=60%>  
+
+In the screenshot, the newly generated model is `sum_with_idx.gml` and `sum_with_idx.png` is the visualized result.  
+
+Once you have verified that the DFG corresponds to your desired model, you will need to take the following steps before AlgoProphet can use the new model:
+
+* Add a formula entry for the  algorithm into `formula.json`:
 ```json
 {
     ...existing...,
@@ -57,9 +61,18 @@ Two more steps:
     ]
 }
 ```
-Take `summation of array` model for example, the first element would be `summation of array: += arr[index]` to be shown in tag content; the second element should be the `arr_sum` that would replace target variable with meaningful name.  
-* move the `.gml` file(only gml file!!) from `test/` to `models/`
-AlgoProphet will scan the existing models in `models/` to match algorithms.
+Taking `summation of array` model for example, the first element would be `summation of array: += arr[index]` to be shown in tag content; the second element should be the `arr_sum` that would replace target variable with meaningful name:
+```json
+{
+    ...existing...,
+    "sum_with_idx.gml": [
+        "summation of array: += arr[index]",
+        "arr_sum"
+    ]
+}
+```
+
+* move only the `.gml` file (not the `.png` file) from `test/` to `models/`. AlgoProphet will scan any models found in `models/` to match algorithms.
 
 ## Model Adjustment
 
