@@ -19,15 +19,21 @@ Currently AlgoProphet provides three functionalities through its Binary Ninja pl
 
 The AlgoProphet plugin's `models/` folder contains the existing models in [GML format](https://en.wikipedia.org/wiki/Graph_Modelling_Language): 
 
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/existing-models.png" width=60% height=60%>
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/existing-models.png)
+<br>The `models/` folder of the AlgoPropet's plugin folder</p>**
 
 To match current function with existing models, you can right click anywhere in the function to open the plugin menu, then select `Plugins > AlgoProphet > Match Algos`.
 
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/rk-match-models.png" width=60% height=60%>  
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/rk-match-models.png)
+<br>Use "Match Algos" in the AlgoProphet plugin menu to run matching</p>**  
 
 For each model that is matched, a tag will be created, indicating which model is likely to be found at the tagged address. In the screenshot, AlgoProphet finds a match for the "summation of array" model at the tagged MLIL instruction:
 
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/match-model-result.png" width=60% height=60%>  
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/match-model-result.png)
+<br>Tagged match results can be found in the AlgoProphet section of the tags list</p>**  
 
 AlgoProphet will also attempt to assign meaningful names to variables, according to matched algorithm. For example, in the screenshot, the variable at line 14 has been changed to `arr_sum`. This helps the user to identify that this variable might be used for the sum of the array.  
 
@@ -41,11 +47,15 @@ We also provide several binary samples of DFT (Discreate Fourier Transform) algo
 
 It is possible to expand the algorithms that AlgoProphet can recognize by adding custom models. While it is possible to construct new model GML files by hand, the easiest way to add a model is with the plugin itself. Begin by selecting multiple instructions which you think are important features for the algorithm, and right click to get the plugin menu: `Plugins > AlgoProphet > Build a model`.  
 
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/highlight-build-model.png" width=60% height=60%>  
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/highlight-build-model.png)
+<br>Algebra Decompiler sidebar icon</p>**  
 
 You can then find your generated model(`.gml` and visualized graph) in the `test/` subfolder of the plugin folder, named from the function containing the selected instructions:
 
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/generated-model.png" width=60% height=60%>  
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/generated-model.png)
+<br>Algebra Decompiler sidebar icon</p>**  
 
 In the screenshot, the newly generated model is `sum_with_idx.gml` and `sum_with_idx.png` is the visualized result.  
 
@@ -81,16 +91,27 @@ It is hard to build model perfectly at the first time, so we build up an interac
 
 First, before we adjust a model, make sure that you have existing model put in `test/`. You can also move the model back from `models/`.  
 Back to the generated model in previous section, we think that the subgraph which includes `arr#0`, `4`, and `ADD#0` is not important for this algorithm(summation of array).  
-To adjust our model, you can right click(at any places of the function) to get the plugin menu: `Plugins > AlgoProphet > Adjust a model`. We can choose to remove either `Operations` or `SSAVars or Constants`.  
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjust-constants.png" width=60% height=60%>  
+To adjust our model, you can right click (at any places of the function) to get the plugin menu: `Plugins > AlgoProphet > Adjust a model`. We can choose to remove either `Operations` or `SSAVars or Constants`.  
+
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/adjust-constants.png)
+<br>Use the "Adjust a model" in the AlgoProphet plugin menu to fine-tune a model</p>**  
+
 In screenshot, we pick `SSAVars or Constants` in order to remove `4` from our model.  
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjusted-model.png" width=60% height=60%>  
+
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/adjusted-model.png)
+<br>The adjusted DFG model after removing the operand node for `4`</p>**  
+
 From the screenshot, we can find that `4` is already removed from the graph model. You can also use the same way to remove other `SSAVars`.  
 Of course, you can just re-create a new model by highlighting different instructions, but if you want to partial nodes from instructions (e.g., you might want to remove `0` from model, but keep `load#0`), then adjust model would be your best tool!  
-Another option is to remove `Operations` such as `load#?` or `ADD#?` from the model. It is invisible to pick from binary view, so we provide an *indirect* way to do it. Assume we want to remove `ADD#0` from the model, and we also know that it is the operator of `arr#0`(from visualized result), we can right-click on `arr#0` and choose the option of `Operations`.  
-<img src="https://github.com/Vector35/AlgoProphet/blob/main/screenshots/adjusted-op-model.png" height=60% width=60%>  
-From the screenshot, we can find that `ADD#0` has been removed from the model.  
-After adjusting your model, remember to put it back to `models/` before `Match Algos`, also keep the information in `formula.json` and your model consistent.
+Another option is to remove `Operations` such as `load#?` or `ADD#?` from the model. It is invisible to pick from binary view, so we provide an *indirect* way to do it. Assume we want to remove `ADD#0` from the model, and we also know that it is the operator of `arr#0`(from visualized result), we can right-click on `arr#0` and choose the option of `Operations`.
+
+**<p align="center" style="text-align: center; width: 75%; margin-left: auto; margin-right: auto">
+![Algebra Decompiler sidebar icon](screenshots/adjusted-op-model.png)
+<br>The adjusted DFG model after removing the operator node for `ADD#0`</p>**
+
+From the screenshot, we can find that `ADD#0` has been removed from the model. After adjusting your model, remember to put it back to `models/` before `Match Algos`, also keep the information in `formula.json` and your model consistent.
 
 > Suggest to keep test folder clean after you move your own model
 
