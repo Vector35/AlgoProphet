@@ -3,12 +3,7 @@ import json
 import networkx as nx
 from networkx.algorithms import isomorphism
 
-try:
-    from . import print
-except:
-    pass
-
-PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+from . import print, get_algoprophet_path
 
 
 def node_match(n1, n2):
@@ -56,16 +51,16 @@ def node_match(n1, n2):
 
 def match(target: nx.DiGraph):
     formula = dict()
-    with open(os.path.join(PLUGINDIR_PATH, "formula.json")) as f:
+    with open(get_algoprophet_path("formula.json")) as f:
         formula = json.load(f)
 
     models = dict()
-    for model_gml in os.listdir(os.path.join(PLUGINDIR_PATH, "models")):
+    for model_gml in os.listdir(get_algoprophet_path("models")):
         # if model_gml.split(".")[-1] == "gml":
         if os.path.splitext(model_gml)[-1] == ".gml":
             models[formula[model_gml][0]] = list()
             models[formula[model_gml][0]].append(
-                nx.read_gml(os.path.join(PLUGINDIR_PATH, "models", model_gml))
+                nx.read_gml(get_algoprophet_path("models", model_gml))
             )
             models[formula[model_gml][0]].append(formula[model_gml][1])
 

@@ -34,7 +34,7 @@ from binaryninja import (
 )
 from binaryninja.enums import TypeClass as TC
 
-from . import print, log_warn
+from . import print, log_warn, get_algoprophet_path
 
 # TODO: get rid of all these globals and use a class
 
@@ -63,7 +63,7 @@ opmap = {
 
 # graph = nx.DiGraph()
 
-PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+# PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 """
 get base type width by pointer
@@ -707,12 +707,10 @@ def read_binaryview(binview: BinaryView, mlil_func: MediumLevelILFunction, filte
         graph.remove_nodes_from(filtered_nodes)
         nx.draw(graph, with_labels=True)
         if plt is not None:
-            plt.savefig(os.path.join(PLUGINDIR_PATH, "test", f.name + ".png"))
-        nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name + ".gml"))
+            plt.savefig(get_algoprophet_path("test", f.name + ".png"))
+        nx.write_gml(graph, get_algoprophet_path("test", f.name + ".gml"))
         if plt is not None:
             plt.clf()
         return graph
-
-    # nx.write_gml(graph, os.path.join(PLUGINDIR_PATH, "test", f.name))
 
     return graph

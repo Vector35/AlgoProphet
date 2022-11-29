@@ -1,3 +1,4 @@
+import re
 from traceback import format_exc
 
 from typing import List, Union
@@ -31,6 +32,7 @@ from binaryninja import (
     MediumLevelILBasicBlock,
     MediumLevelILSetVarSsa,
     PluginCommand,
+    Settings,
     TagType,
     get_form_input,
 )
@@ -72,18 +74,60 @@ def print(*args, **kwargs):
         logger = log_debug
     with io.StringIO() as f:
         kwargs['file'] = f
-        import inspect
-        frame = inspect.stack()[1]
-        if frame.function:
-            if frame.lineno:
-                caller = f'[{frame.function}:{frame.lineno}]: '
+        caller = ''
+        if logger == log_debug:
+            import inspect
+            frame = inspect.stack()[1]
+            if frame.function:
+                if frame.lineno:
+                    caller = f'[{frame.function}:{frame.lineno}]: '
+                else:
+                    caller = f'[{frame.function}]: '
             else:
-                caller = f'[{frame.function}]: '
-        else:
-            caller = ''
+                caller = ''
         import builtins
         builtins.print(*args, **kwargs)
         logger(caller + f.getvalue())
+
+
+PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+
+Settings().register_group("algoprophet", "AlgoProphet")
+
+Settings().register_setting(
+    "algoprophet.userFolderPath",
+    """
+    {
+        "title" : "User Model Folder",
+        "description" : "Path to folder for storing user model files.",
+        "default" : "",
+        "type" : "string"
+    }
+""",
+)
+
+Settings().register_setting(
+    "algoprophet.ignoreFunctionNames",
+    """
+    {
+        "title" : "Ignore Function Names",
+        "description" : "List of function names to ignore during algorithm matching.",
+        "type" : "array",
+        "elementType" : "string",
+        "default" : ["register_tm_clones", "deregister_tm_clones", "_init", "_start", "__libc_start_main", "__do_global_dtors_aux", "__cxa_finalize", "__gmon_start__", "__printf_chk", "__stack_chk_fail", "__stack_chk_guard", "_fini", "_ftext", "abort", "call_weak_fn", "frame_dummy", "time"]
+    }
+""",
+)
+
+
+def get_algoprophet_path(*components, allow_default: bool = True) -> str:
+    path = Settings().get_string("algoprophet.userFolderPath")
+    if not path and allow_default:
+        path = PLUGINDIR_PATH
+    if path:
+        return os.path.join(path, *components)
+    return None
+
 
 from . import (
     dfg,
@@ -92,10 +136,8 @@ from . import (
     # model_browser,
 )
 
-ignore_list = list()
-inst_tag_list = dict()
 
-PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+# inst_tag_list = dict()
 
 
 @dataclass
@@ -114,35 +156,38 @@ def get_ignore_list():
     '''
     ignore function included in the list
     '''
-    global ignore_list
-    with open(os.path.join(PLUGINDIR_PATH, "ignore.txt")) as f:
-        lines = f.readlines()
-        for line in lines:
-            e = line.strip()
-            if e not in ignore_list:
-                ignore_list.append(e)
-    f.close()
+    # global ignore_list
+    # with open(os.path.join(PLUGINDIR_PATH, "ignore.txt")) as f:
+    #     lines = f.readlines()
+    #     for line in lines:
+    #         e = line.strip()
+    #         if e not in ignore_list:
+    #             ignore_list.append(e)
+    # f.close()
+    return Settings().get_string_list("algoprophet.ignoreFunctionNames")
 
 
 def load_inst_tag_list(bv: BinaryView, addr):
     '''
     load previous tag list from bndb
     '''
-    global inst_tag_list
+    # global inst_tag_list
+    inst_tag_list = {}
     tags = bv.get_user_data_tags_at(addr)
     if len(tags) != 0:
         if addr not in inst_tag_list:
             inst_tag_list[addr] = list()
-        for i in range(len(tags)):
-            inst_tag_list[addr].append(tags[i].data)
+        for tag in tags:
+            inst_tag_list[addr].append(tag.data)
+    return inst_tag_list
 
 
 def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
     '''
     add tag to instruction if model still not identified
     '''
-    global inst_tag_list
-    load_inst_tag_list(bv, addr)
+    # global inst_tag_list
+    inst_tag_list = load_inst_tag_list(bv, addr)
     if addr not in inst_tag_list:
         inst_tag_list[addr] = list()
     if model in inst_tag_list[addr]:
@@ -166,6 +211,13 @@ def matcher(bv: BinaryView, f_dfg: nx.DiGraph, f: Function, user_tag: TagType):
                 s = f.mlil.ssa_form[idx]
                 if isinstance(s, MediumLevelILSetVarSsa):
                     target_var = s.dest.var
+                    name = target_var.name
+                    split = name.split('_')
+                    if split and (split[0] == 'var' or split[0] in f.arch.regs):
+                        if check := [s for s in split[1:] if not re.match(r'[0-9]+', s)]:
+                            print('debug', f'{s.address:#x} ({s}): not renaming var {name!r} ({split = }) ({check = })')
+                            print('warn', f'Not renaming non-default named var {name!r} at {s.address:#x}.\nTo have AlgoProphet rename this variable, unset its name and rerun Match Algos')
+                            continue
                     target_var.set_name_async(matched_inst_dest[1])
                     target_var.function.view.update_analysis()
 
@@ -180,7 +232,7 @@ def function_iterator(bv: BinaryView):
     if bv.get_tag_type("AlgoProphet") is None:
         bv.create_tag_type("AlgoProphet", chr(0x2140))
     tag = bv.get_tag_type("AlgoProphet")
-    get_ignore_list()
+    ignore_list = get_ignore_list()
     for f in bv.functions:
         if (f.name in ignore_list) or (not f.name[0].isalpha()):
             continue
@@ -188,11 +240,19 @@ def function_iterator(bv: BinaryView):
         dfg.clean_data()
 
 
+def check_context(ctx: UIActionContext, action: str, require_function: bool = True) -> bool:
+    if not (ctx and ctx.context and ctx.binaryView):
+        log_error(f"AlgoProphet - {action}: no binary view selected")
+        return False
+    if require_function and not (ctx and ctx.function and ctx.address):
+        log_error(f"AlgoProphet - {action}: no function selected")
+        return False
+    return True
+
+
 def match_helper(ctx: UIActionContext):
-    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        log_warn("click the binary view!!")
-        return
-    function_iterator(ctx.binaryView)
+    if check_context(ctx, 'Match Algos', require_function=False):
+        function_iterator(ctx.binaryView)
 
 
 def rk_match_helper(bv: BinaryView, func: Function):
@@ -200,19 +260,18 @@ def rk_match_helper(bv: BinaryView, func: Function):
     if bv.get_tag_type("AlgoProphet") is None:
         bv.create_tag_type("AlgoProphet", chr(0x2140))
     tag = bv.get_tag_type("AlgoProphet")
-    get_ignore_list()
-    if func.name in ignore_list:
+    if func.name in get_ignore_list():
         return
     matcher(bv, dfg.read_binaryview(bv, func.mlil), func, tag)
     dfg.clean_data()
 
 
 def adjust_helper(ctx: UIActionContext):
-    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        log_warn("click the binary view!!")
+    if not check_context(ctx, 'Adjust Tested models'):
         return
     bv = ctx.binaryView
     func_name = TextLineField("Specify the function name")
+    func_name.text = ctx.function.name
     var_list = MultilineTextField("Ignore variable names")
     constant_list = MultilineTextField("Ignore constants")
     misc_list = MultilineTextField("Ignore based on labels")
@@ -222,14 +281,17 @@ def adjust_helper(ctx: UIActionContext):
     filter_dict = dict()
     filter_dict["var_list"] = list()
     for i in var_list.result.split("\n"):
+        i = i.strip()
         if len(i) != 0:
             filter_dict["var_list"].append(i)
     filter_dict["constant_list"] = list()
     for i in constant_list.result.split("\n"):
+        i = i.strip()
         if len(i) != 0:
             filter_dict["constant_list"].append(i)
     filter_dict["misc_list"] = list()
     for i in misc_list.result.split("\n"):
+        i = i.strip()
         if len(i) != 0:
             filter_dict["misc_list"].append(i)
     dfg_processor.read_dfg_with_fdict(f.name, filter_dict)
@@ -308,7 +370,7 @@ def pre_process(subject: Union[Subject, List[Subject]]) -> SelectionState:
         case object(source_function=source_function):
             return pre_process(source_function)
         case _:
-            raise Exception(f"unrecognized subject type {type(subject)}")
+            raise ValueError(f"Unrecognized subject type: {type(subject)}")
     return SelectionState(
         function,
         blocks,
@@ -362,10 +424,8 @@ def selection_helper(bv: BinaryView, start: int, end: int) -> None:
 
 
 def build_helper(ctx: UIActionContext):
-    if ctx is None or ctx.context is None or ctx.binaryView is None or ctx.function is None or ctx.address is None:
-        log_warn("click the binary view!!")
-        return
-    selection_helper(ctx.binaryView, ctx.address, ctx.address + ctx.length)
+    if check_context(ctx, 'Build a model'):
+        selection_helper(ctx.binaryView, ctx.address, ctx.address + ctx.length)
 
 
 def rk_build_helper(bv, start, length):
