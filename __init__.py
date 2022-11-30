@@ -1,3 +1,4 @@
+from collections import defaultdict
 import re
 from traceback import format_exc
 
@@ -16,7 +17,6 @@ from binaryninjaui import (
     UIActionHandler,
     UIContext,
 )
-# from PySide6.QtWidgets import QWidget
 
 from binaryninja.enums import (
     FunctionGraphType,
@@ -120,9 +120,13 @@ Settings().register_setting(
 )
 
 
-def get_algoprophet_path(*components, allow_default: bool = True) -> str:
+def get_algoprophet_path(*components, allow_default: bool = True, plugin_only: bool = False) -> str:
     path = Settings().get_string("algoprophet.userFolderPath")
-    if not path and allow_default:
+    if path and os.path.isdir(path):
+        for f in ['test', 'models']:
+            if not os.path.isdir(os.path.join(path, f)):
+                os.mkdir(os.path.join(path, f))
+    if plugin_only or (not path and allow_default):
         path = PLUGINDIR_PATH
     if path:
         return os.path.join(path, *components)
@@ -135,9 +139,6 @@ from . import (
     graph_match,
     # model_browser,
 )
-
-
-# inst_tag_list = dict()
 
 
 @dataclass
@@ -171,29 +172,22 @@ def load_inst_tag_list(bv: BinaryView, addr):
     '''
     load previous tag list from bndb
     '''
-    # global inst_tag_list
-    inst_tag_list = {}
+    inst_tag_list = defaultdict(list)
     tags = bv.get_user_data_tags_at(addr)
     if len(tags) != 0:
-        if addr not in inst_tag_list:
-            inst_tag_list[addr] = list()
         for tag in tags:
             inst_tag_list[addr].append(tag.data)
-    return inst_tag_list
+    return dict(inst_tag_list)
 
 
 def add_model_tag_to_inst(bv: BinaryView, addr, model, user_tag):
     '''
     add tag to instruction if model still not identified
     '''
-    # global inst_tag_list
-    inst_tag_list = load_inst_tag_list(bv, addr)
-    if addr not in inst_tag_list:
-        inst_tag_list[addr] = list()
-    if model in inst_tag_list[addr]:
-        return
-    inst_tag_list[addr].append(model)
-    bv.create_user_data_tag(addr, user_tag, f'{model}')
+    inst_tag_list = defaultdict(list, load_inst_tag_list(bv, addr))
+    if model not in inst_tag_list[addr]:
+        inst_tag_list[addr].append(model)
+        bv.create_user_data_tag(addr, user_tag, f'{model}')
 
 
 def matcher(bv: BinaryView, f_dfg: nx.DiGraph, f: Function, user_tag: TagType):
@@ -213,11 +207,17 @@ def matcher(bv: BinaryView, f_dfg: nx.DiGraph, f: Function, user_tag: TagType):
                     target_var = s.dest.var
                     name = target_var.name
                     split = name.split('_')
-                    if split and (split[0] == 'var' or split[0] in f.arch.regs):
-                        if check := [s for s in split[1:] if not re.match(r'[0-9]+', s)]:
-                            print('debug', f'{s.address:#x} ({s}): not renaming var {name!r} ({split = }) ({check = })')
-                            print('warn', f'Not renaming non-default named var {name!r} at {s.address:#x}.\nTo have AlgoProphet rename this variable, unset its name and rerun Match Algos')
-                            continue
+                    check = ''
+                    user_set = (
+                        split and (
+                            not (split[0] == 'var' or split[0] in f.arch.regs)
+                            or (check := [s for s in split[1:] if not re.match(r'[0-9]+', s)])
+                        )
+                    )
+                    if user_set:
+                        print('debug', f'{s.address:#x} ({s}): not renaming var {name!r} ({split = !r}) ({check = !r})')
+                        print('warn', f'Not renaming non-default named var {name!r} at {s.address:#x}.\nTo have AlgoProphet rename this variable, unset its name and rerun Match Algos')
+                        continue
                     target_var.set_name_async(matched_inst_dest[1])
                     target_var.function.view.update_analysis()
 
@@ -266,62 +266,67 @@ def rk_match_helper(bv: BinaryView, func: Function):
     dfg.clean_data()
 
 
+# def get_formula_info(function: Function, graph: nx.DiGraph):
+#     bv = function.view
+#     formula_name = TextLineField("File name", default=function.name)
+#     description = TextLineField("Formula Description (for tags)", default=function.name)
+#     var_name = TextLineField("Variable Name (for renaming)", default=function.name)
+#     if get_form_input([formula_name, description, var_name], "AlgoProphet - Save New Model"):
+#         pass
+
+
 def adjust_helper(ctx: UIActionContext):
     if not check_context(ctx, 'Adjust Tested models'):
         return
     bv = ctx.binaryView
-    func_name = TextLineField("Specify the function name")
-    func_name.text = ctx.function.name
+    func_name = TextLineField("Specify the function name", default=ctx.function.name)
     var_list = MultilineTextField("Ignore variable names")
     constant_list = MultilineTextField("Ignore constants")
     misc_list = MultilineTextField("Ignore based on labels")
-    get_form_input([func_name, var_list, constant_list, misc_list], "AlgoProphet")
-    f = bv.get_functions_by_name(func_name.result)[0]
-    print("Adjust current model on function: ", f.name)
-    filter_dict = dict()
-    filter_dict["var_list"] = list()
-    for i in var_list.result.split("\n"):
-        i = i.strip()
-        if len(i) != 0:
-            filter_dict["var_list"].append(i)
-    filter_dict["constant_list"] = list()
-    for i in constant_list.result.split("\n"):
-        i = i.strip()
-        if len(i) != 0:
-            filter_dict["constant_list"].append(i)
-    filter_dict["misc_list"] = list()
-    for i in misc_list.result.split("\n"):
-        i = i.strip()
-        if len(i) != 0:
-            filter_dict["misc_list"].append(i)
-    dfg_processor.read_dfg_with_fdict(f.name, filter_dict)
+    if get_form_input([func_name, var_list, constant_list, misc_list], "AlgoProphet"):
+        f = bv.get_functions_by_name(func_name.result)
+        f = f and f[0]
+        if not f:
+            return
+        print("Adjust current model on function: ", f.name)
+        filter_dict = dict()
+        filter_dict["var_list"] = list()
+        for i in var_list.result.split("\n"):
+            i = i.strip()
+            if len(i) != 0:
+                filter_dict["var_list"].append(i)
+        filter_dict["constant_list"] = list()
+        for i in constant_list.result.split("\n"):
+            i = i.strip()
+            if len(i) != 0:
+                filter_dict["constant_list"].append(i)
+        filter_dict["misc_list"] = list()
+        for i in misc_list.result.split("\n"):
+            i = i.strip()
+            if len(i) != 0:
+                filter_dict["misc_list"].append(i)
+        dfg_processor.read_dfg_with_fdict(f.name, filter_dict)
 
 
 def rk_adjust_helper(bv: BinaryView, func: Function):
     uc = UIContext.activeContext()
-    # cv = uc.getCurrentView()
-    # hts = cv.getHighlightTokenState()
     ah = uc.getCurrentActionHandler()
     ctx = ah.actionContext()
 
     h = ctx.token
     f = ctx.function.name
     token_name = h.token.text
-    # token_type = h.token.type
     dfg_processor.rk_read_dfg(f, token_name, False)
 
 
 def rkop_adjust_helper(bv: BinaryView, instr: MediumLevelILInstruction):
     uc = UIContext.activeContext()
-    # cv = uc.getCurrentView()
-    # hts = cv.getHighlightTokenState()
     ah = uc.getCurrentActionHandler()
     ctx = ah.actionContext()
 
     h = ctx.token
     f = ctx.function.name
     token_name = h.token.text
-    # token_var = h.localVar
     dfg_processor.rk_read_dfg(f, token_name, True)
 
 
@@ -443,11 +448,11 @@ PluginCommand.register_for_function(
     "AlgoProphet\\Match Algos", "Match current function with existing models", rk_match_helper
 )
 PluginCommand.register_for_range(
-    "AlgoProphet\\Build a model", "Build DFG model based on specified instructions", rk_build_helper
+    "AlgoProphet\\Build a model", "Build DFG model based on selected instructions", rk_build_helper
 )
 PluginCommand.register_for_function(
     "AlgoProphet\\Adjust a model\\SSAVars or Constants", "Adjust the model for current function", rk_adjust_helper
 )
 PluginCommand.register_for_medium_level_il_instruction(
-    "AlgoProphet\\Adjust a model\\Operations", "Adjust the model for current fuinction", rkop_adjust_helper
+    "AlgoProphet\\Adjust a model\\Operations", "Adjust the model for current function", rkop_adjust_helper
 )

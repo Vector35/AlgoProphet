@@ -6,7 +6,7 @@ try:
 except:
     plt = None
 
-from . import print, log_warn, get_algoprophet_path
+from . import print, log_alert, log_warn, get_algoprophet_path
 
 # PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,8 +39,8 @@ def adjust_dfg(func_name, dfgraph, filter_dict):
 def read_dfg_with_fdict(func_name, filter_dict):
     gml_name = get_algoprophet_path("test", func_name + ".gml")
     png_name = get_algoprophet_path("test", func_name + ".png")
-    if os.path.exists(gml_name) is False:
-        log_warn("Model not exists, please check test folder")
+    if not os.path.exists(gml_name):
+        log_alert(f'Model file not found:\n{gml_name!r}')
         return
     dfgraph = nx.read_gml(gml_name)
     # delete file after read
@@ -63,14 +63,14 @@ def rk_get_op(dfgraph, label):
 def rk_read_dfg(func_name, label, rm_op):
     gml_name = get_algoprophet_path("test", func_name + ".gml")
     png_name = get_algoprophet_path("test", func_name + ".png")
-    if os.path.exists(gml_name) is False:
+    if not os.path.exists(gml_name):
         log_warn("Model not exists, please check test folder")
         return
     dfgraph = nx.read_gml(gml_name)
     if not dfgraph.has_node(label):
         log_warn(f"Cannot find node {label}")
         return
-    if rm_op is True:
+    if rm_op:
         # this is used for removing operation nodes
         closest_op = rk_get_op(dfgraph, label)
         if closest_op is None:
@@ -84,7 +84,7 @@ def rk_read_dfg(func_name, label, rm_op):
     os.remove(gml_name)
     os.remove(png_name)
     if plt is not None:
-        plt.savefig(get_algoprophet_path("test", func_name + ".png"))
-    nx.write_gml(dfgraph, get_algoprophet_path("test", func_name + ".gml"))
+        plt.savefig(png_name)
+    nx.write_gml(dfgraph, gml_name)
     if plt is not None:
         plt.clf()
