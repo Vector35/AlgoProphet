@@ -59,6 +59,10 @@
         "Percentage%: a/b * 100",
         "percentage"
     ],
+    "pythagorean.gml": [
+        "Pythagorean Theorem: sqrt(a^2 + b^2)",
+        "pythagorean"
+    ],
     "euler.gml": [
         "euler: cos(x) + i*sin(x)",
         "euler_cos_plus_i_sin"
