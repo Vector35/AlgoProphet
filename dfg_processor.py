@@ -1,42 +1,53 @@
-import os, sys
+import os
 import networkx as nx
-import matplotlib.pyplot as plt
 
-PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
+
+from . import print, log_alert, log_warn, get_algoprophet_path
+
+# PLUGINDIR_PATH = os.path.abspath(os.path.dirname(__file__))
+
 
 def adjust_dfg(func_name, dfgraph, filter_dict):
     remove_node_list = list()
     for i in filter_dict["var_list"]:
-        for x, y in dfgraph.nodes(data = True):
+        for x, y in dfgraph.nodes(data=True):
             if (i in y["value"]) and (x not in remove_node_list):
                 remove_node_list.append(x)
     for i in filter_dict["constant_list"]:
-        for x, y in dfgraph.nodes(data = True):
+        for x, y in dfgraph.nodes(data=True):
             if (i == y["value"]) and (x not in remove_node_list):
                 remove_node_list.append(x)
     for i in filter_dict["misc_list"]:
-        for x, y in dfgraph.nodes(data = True):
+        for x, y in dfgraph.nodes(data=True):
             if (i == x) and (x not in remove_node_list):
                 remove_node_list.append(x)
     # iterate remove_node_list on dfgraph
     for n in remove_node_list:
         dfgraph.remove_node(n)
     nx.draw(dfgraph, with_labels=True)
-    plt.savefig(os.path.join(PLUGINDIR_PATH, "test", func_name + ".png"))
-    nx.write_gml(dfgraph, os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml"))
-    plt.clf()
+    if plt is not None:
+        plt.savefig(get_algoprophet_path("test", func_name + ".png"))
+    nx.write_gml(dfgraph, get_algoprophet_path("test", func_name + ".gml"))
+    if plt is not None:
+        plt.clf()
+
 
 def read_dfg_with_fdict(func_name, filter_dict):
-    gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
-    png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
-    if os.path.exists(gml_name) == False:
-        print("Model not exists, please check test folder")
+    gml_name = get_algoprophet_path("test", func_name + ".gml")
+    png_name = get_algoprophet_path("test", func_name + ".png")
+    if not os.path.exists(gml_name):
+        log_alert(f'Model file not found:\n{gml_name!r}')
         return
     dfgraph = nx.read_gml(gml_name)
     # delete file after read
     os.remove(gml_name)
     os.remove(png_name)
     adjust_dfg(func_name, dfgraph, filter_dict)
+
 
 def rk_get_op(dfgraph, label):
     if dfgraph.nodes[label]["type"] == "operation":
@@ -48,21 +59,22 @@ def rk_get_op(dfgraph, label):
         return None
     return rk_get_op(dfgraph, list(e)[0][1])
 
+
 def rk_read_dfg(func_name, label, rm_op):
-    gml_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml")
-    png_name = os.path.join(PLUGINDIR_PATH, "test", func_name + ".png")
-    if os.path.exists(gml_name) == False:
-        print("Model not exists, please check test folder")
+    gml_name = get_algoprophet_path("test", func_name + ".gml")
+    png_name = get_algoprophet_path("test", func_name + ".png")
+    if not os.path.exists(gml_name):
+        log_warn("Model not exists, please check test folder")
         return
     dfgraph = nx.read_gml(gml_name)
     if not dfgraph.has_node(label):
-        print(f"Cannot find node {label}")
+        log_warn(f"Cannot find node {label}")
         return
-    if rm_op == True:
+    if rm_op:
         # this is used for removing operation nodes
         closest_op = rk_get_op(dfgraph, label)
-        if closest_op == None:
-            print(f"Cannot find related operation nodes for {label}")
+        if closest_op is None:
+            log_warn(f"Cannot find related operation nodes for {label}")
             return
         label = closest_op
     # remove nodes from graph
@@ -71,6 +83,8 @@ def rk_read_dfg(func_name, label, rm_op):
     # delete file after read
     os.remove(gml_name)
     os.remove(png_name)
-    plt.savefig(os.path.join(PLUGINDIR_PATH, "test", func_name + ".png"))
-    nx.write_gml(dfgraph, os.path.join(PLUGINDIR_PATH, "test", func_name + ".gml"))
-    plt.clf()
+    if plt is not None:
+        plt.savefig(png_name)
+    nx.write_gml(dfgraph, gml_name)
+    if plt is not None:
+        plt.clf()
